@@ -59,7 +59,7 @@
 
   .section-title { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.6px; margin:16px 0 8px; }
 
-  /* ── КАРТОЧКА ЗАКАЗА ── */
+  /* ── КАРТОЧКА ЗАКАЗА (компактный формат) ── */
   .order-card { background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:10px; border-left:4px solid #ccc; box-shadow:0 1px 4px rgba(0,0,0,.07); cursor:pointer; transition:transform .1s; }
   .order-card:active { transform:scale(.98); }
   .order-card.red { border-left-color:#ef4444; }
@@ -67,18 +67,12 @@
   .order-card.green { border-left-color:#22c55e; }
   .card-r1 { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
   .card-patient { font-size:15px; font-weight:700; }
-  .card-work { font-size:14px; font-weight:600; color:#1e293b; margin-bottom:7px; }
-  .card-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px; }
-  .chip { display:inline-flex; align-items:center; font-size:12px; font-weight:600; padding:3px 9px; border-radius:8px; }
-  .chip.u { background:#ede9fe; color:#6d28d9; }
-  .chip.t { background:#fef3c7; color:#92400e; }
-  .chip.m { background:#eff6ff; color:#2563eb; }
-  .card-dates { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:9px; }
-  .date-box { background:#f8fafc; border-radius:8px; padding:6px 10px; }
-  .date-lbl { font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-bottom:2px; }
-  .date-val { font-size:13px; font-weight:700; }
-  .date-val.red { color:#dc2626; }
-  .date-val.yellow { color:#d97706; }
+  .card-work-line { font-size:13px; color:#475569; margin-bottom:8px; line-height:1.5; }
+  .card-work-line strong { color:#1e293b; font-weight:600; }
+  .card-msg-tag { font-size:11px; color:#2563eb; background:#eff6ff; padding:2px 7px; border-radius:10px; margin-left:4px; }
+  .card-bottom { display:flex; justify-content:space-between; align-items:center; }
+  .card-appt { font-size:12px; color:#64748b; }
+  .card-appt strong { color:#1a1a1a; }
   .badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; }
   .badge.red { background:#fee2e2; color:#dc2626; }
   .badge.yellow { background:#fef3c7; color:#d97706; }
@@ -192,6 +186,11 @@
     <div id="detail-content"></div>
   </div>
 
+  <!-- ЭКРАН: СООБЩЕНИЯ -->
+  <div class="screen" id="screen-messages">
+    <div id="messages-content"></div>
+  </div>
+
   <!-- ЭКРАН: ДАШБОРД -->
   <div class="screen" id="screen-dashboard">
     <div id="dashboard-content"><div class="loading-text">Загрузка...</div></div>
@@ -200,7 +199,11 @@
   <div class="bottom-nav">
     <button class="bnav-btn active" id="bnav-orders" onclick="showOrders()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Заказы
+      Мои заказы
+    </button>
+    <button class="bnav-btn" id="bnav-msgs" onclick="showMessages()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Сообщения
     </button>
     <button class="bnav-btn" id="bnav-dash" onclick="showDashboard()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
@@ -333,25 +336,22 @@ function renderOrders() {
 function cardHTML(o) {
   const u = urgency(o.deadline);
   const dl = fmt(o.deadline);
-  const dlClass = u === 'red' ? 'red' : u === 'yellow' ? 'yellow' : '';
   const hasMsgs = o.messages && o.messages.length > 0;
+  const badgeColor = u === 'red' ? 'red' : u === 'yellow' ? 'yellow' : 'green';
   return `
   <div class="order-card ${u}" onclick="showDetail('${o.id}')">
     <div class="card-r1">
       <div class="card-patient">${o.patient_name}</div>
-      <span class="badge ${u === 'red' ? 'red' : u === 'yellow' ? 'yellow' : 'green'}">${dl}</span>
+      <span class="badge ${badgeColor}">${dl}</span>
     </div>
-    <div class="card-work">${o.work_type}</div>
-    <div class="card-chips">
-      <span class="chip u">${o.units} ${o.units === 1 ? 'единица' : 'единицы'}</span>
-      <span class="chip t">Зубы ${o.teeth}</span>
-      ${hasMsgs ? `<span class="chip m">📎 от врача</span>` : ''}
+    <div class="card-work-line">
+      <strong>${o.work_type}</strong> ${o.units} ед. (зубы ${o.teeth})
+      ${hasMsgs ? `<span class="card-msg-tag">📎 фото от врача</span>` : ''}
     </div>
-    <div class="card-dates">
-      <div class="date-box"><div class="date-lbl">Сдать до</div><div class="date-val ${dlClass}">${dl}</div></div>
-      <div class="date-box"><div class="date-lbl">Приём</div><div class="date-val">${fmt(o.appointment_at)}</div></div>
+    <div class="card-bottom">
+      <div class="card-appt">Приём: <strong>${fmt(o.appointment_at)}</strong></div>
+      ${statusBadge(o.status)}
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center">${statusBadge(o.status)}</div>
   </div>`;
 }
 
@@ -456,15 +456,45 @@ async function addComment() {
 function showOrders() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-orders').classList.add('active');
+  ['bnav-orders','bnav-msgs','bnav-dash'].forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById('bnav-orders').classList.add('active');
-  document.getElementById('bnav-dash').classList.remove('active');
+}
+
+function showMessages() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-messages').classList.add('active');
+  ['bnav-orders','bnav-msgs','bnav-dash'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('bnav-msgs').classList.add('active');
+
+  const allMsgs = orders.flatMap(o =>
+    (o.messages||[]).map(m => ({...m, patient: o.patient_name, order_id: o.id, work: o.work_type}))
+  );
+
+  if (!allMsgs.length) {
+    document.getElementById('messages-content').innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg><div>Нет сообщений от врачей</div></div>`;
+    return;
+  }
+
+  const html = allMsgs.map(m => `
+    <div class="detail-card" onclick="showDetail('${m.order_id}')" style="cursor:pointer;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700;color:#2563eb">${m.from}</span>
+        <span style="font-size:11px;color:#94a3b8">${m.time.slice(11,16)}</span>
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:6px">По пациенту: <strong>${m.patient}</strong> · ${m.work}</div>
+      <div style="font-size:13px;color:#334155;line-height:1.5">${m.text}</div>
+      ${m.has_photo ? `<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:100px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin-top:8px">📷 Фото от врача</div>` : ''}
+      <div style="font-size:11px;color:#94a3b8;margin-top:8px;display:flex;align-items:center;gap:4px"><span style="background:#29b6f6;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800">TG</span> Из Telegram → переслано автоматически</div>
+    </div>`).join('');
+
+  document.getElementById('messages-content').innerHTML = `<div class="section-title">📨 Сообщения от врачей</div>${html}`;
 }
 
 // ── ДАШБОРД ──
 async function showDashboard() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-dashboard').classList.add('active');
-  document.getElementById('bnav-orders').classList.remove('active');
+  ['bnav-orders','bnav-msgs','bnav-dash'].forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById('bnav-dash').classList.add('active');
   try {
     const r = await fetch(`${API}/metrics`, {headers:{'x-pin':localStorage.getItem('pin')}});
