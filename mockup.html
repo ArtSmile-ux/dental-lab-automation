@@ -9,246 +9,366 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a1a; }
 
   /* NAV */
-  .nav { display: flex; gap: 0; border-bottom: 2px solid #e0e0e0; background: #fff; position: sticky; top: 0; z-index: 100; }
+  .nav { display: flex; border-bottom: 2px solid #e0e0e0; background: #fff; position: sticky; top: 0; z-index: 100; }
   .nav button { flex: 1; padding: 14px 8px; border: none; background: none; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 3px solid transparent; transition: all .2s; }
   .nav button.active { color: #2563eb; border-bottom-color: #2563eb; }
 
   /* SCREENS */
-  .screen { display: none; padding: 16px; max-width: 430px; margin: 0 auto; }
+  .screen { display: none; padding: 16px; max-width: 430px; margin: 0 auto; padding-bottom: 90px; }
   .screen.active { display: block; }
 
-  /* SCREEN: TECHNICIAN LIST */
+  /* HEADER BLOCK */
   .header-block { background: #1e293b; color: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
   .header-block .greeting { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
   .header-block .name { font-size: 20px; font-weight: 700; }
-  .header-block .stats { display: flex; gap: 16px; margin-top: 14px; }
-  .header-block .stat { background: rgba(255,255,255,.1); border-radius: 10px; padding: 10px 14px; flex: 1; text-align: center; }
+  .header-block .stats { display: flex; gap: 10px; margin-top: 14px; }
+  .header-block .stat { background: rgba(255,255,255,.1); border-radius: 10px; padding: 10px 12px; flex: 1; text-align: center; }
   .header-block .stat-num { font-size: 22px; font-weight: 700; }
   .header-block .stat-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
-  .section-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin: 16px 0 8px; }
+  .section-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .6px; margin: 18px 0 8px; }
 
-  .order-card { background: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; border-left: 4px solid #ccc; box-shadow: 0 1px 4px rgba(0,0,0,.06); cursor: pointer; transition: transform .1s; }
+  /* ═══════════════════════════════════
+     СТАНДАРТНАЯ КАРТОЧКА ЗАКАЗА
+     ═══════════════════════════════════ */
+  .order-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-left: 4px solid #ccc;
+    box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    cursor: pointer;
+    transition: transform .1s;
+  }
   .order-card:active { transform: scale(.98); }
-  .order-card.red { border-left-color: #ef4444; }
+  .order-card.red    { border-left-color: #ef4444; }
   .order-card.yellow { border-left-color: #f59e0b; }
-  .order-card.green { border-left-color: #22c55e; }
+  .order-card.green  { border-left-color: #22c55e; }
 
-  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-  .card-patient { font-size: 15px; font-weight: 600; }
-  .badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
-  .badge.red { background: #fee2e2; color: #dc2626; }
+  /* Строка 1: Пациент + бейдж дедлайна */
+  .card-row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .card-patient { font-size: 15px; font-weight: 700; }
+
+  /* Строка 2: Наименование работы */
+  .card-work { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 7px; }
+
+  /* Строка 3: Единицы + Зубы — чипы */
+  .card-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 9px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; }
+  .chip.units { background: #ede9fe; color: #6d28d9; }
+  .chip.teeth { background: #fef3c7; color: #92400e; }
+  .chip.msg   { background: #eff6ff; color: #2563eb; }
+
+  /* Строка 4: Сроки */
+  .card-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 9px; }
+  .card-date-item { background: #f8fafc; border-radius: 8px; padding: 6px 10px; }
+  .card-date-label { font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
+  .card-date-val { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+  .card-date-val.red    { color: #dc2626; }
+  .card-date-val.yellow { color: #d97706; }
+
+  /* Строка 5: Статус */
+  .card-row5 { display: flex; justify-content: space-between; align-items: center; }
+
+  /* БЕЙДЖИ */
+  .badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .badge.red    { background: #fee2e2; color: #dc2626; }
   .badge.yellow { background: #fef3c7; color: #d97706; }
-  .badge.green { background: #dcfce7; color: #16a34a; }
-  .badge.blue { background: #dbeafe; color: #2563eb; }
-  .badge.gray { background: #f1f5f9; color: #64748b; }
+  .badge.green  { background: #dcfce7; color: #16a34a; }
+  .badge.blue   { background: #dbeafe; color: #2563eb; }
+  .badge.gray   { background: #f1f5f9; color: #64748b; }
+  .badge.purple { background: #ede9fe; color: #6d28d9; }
 
-  .card-work { font-size: 13px; color: #475569; margin-bottom: 8px; }
-  .card-bottom { display: flex; justify-content: space-between; align-items: center; }
-  .card-deadline { font-size: 12px; color: #64748b; }
-  .card-deadline strong { color: #1a1a1a; }
-  .card-msg { font-size: 11px; color: #2563eb; background: #eff6ff; padding: 2px 7px; border-radius: 10px; }
-
-  /* SCREEN: ORDER DETAIL */
-  .back-btn { display: flex; align-items: center; gap: 6px; color: #2563eb; font-size: 14px; font-weight: 500; margin-bottom: 16px; cursor: pointer; border: none; background: none; }
+  /* DETAIL SCREEN */
+  .back-btn { display: flex; align-items: center; gap: 6px; color: #2563eb; font-size: 14px; font-weight: 600; margin-bottom: 16px; cursor: pointer; border: none; background: none; }
   .detail-card { background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-  .detail-card h3 { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 12px; }
-  .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+  .detail-card h3 { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+  .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
   .detail-row:last-child { border-bottom: none; }
-  .detail-row .label { color: #64748b; }
-  .detail-row .value { font-weight: 500; text-align: right; max-width: 60%; }
-  .detail-row .value.red { color: #dc2626; }
-  .detail-row .value.green { color: #16a34a; }
+  .detail-row .lbl { color: #64748b; font-size: 13px; }
+  .detail-row .val { font-weight: 600; text-align: right; }
+  .detail-row .val.red { color: #dc2626; }
 
-  .status-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-  .status-btn { flex: 1; min-width: 80px; padding: 10px 6px; border-radius: 10px; border: 2px solid #e2e8f0; background: #f8fafc; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; text-align: center; transition: all .2s; }
+  /* KEY FIELDS highlight */
+  .detail-highlight { background: #f8fafc; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .detail-highlight-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .dh-item { text-align: center; }
+  .dh-label { font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+  .dh-value { font-size: 16px; font-weight: 800; color: #1e293b; }
+
+  /* СТАТУСЫ */
+  .status-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .status-btn { flex: 1; min-width: 70px; padding: 10px 4px; border-radius: 10px; border: 2px solid #e2e8f0; background: #f8fafc; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; text-align: center; transition: all .2s; }
   .status-btn.active { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
 
-  /* Messages from doctors */
+  /* СООБЩЕНИЯ ОТ ВРАЧА */
   .msg-block { background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-  .msg-block h3 { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 12px; }
+  .msg-block h3 { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
   .msg-item { background: #f8fafc; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
   .msg-item:last-child { margin-bottom: 0; }
   .msg-meta { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .msg-from { font-size: 12px; font-weight: 600; color: #2563eb; }
+  .msg-from { font-size: 12px; font-weight: 700; color: #2563eb; }
   .msg-time { font-size: 11px; color: #94a3b8; }
   .msg-text { font-size: 13px; color: #334155; margin-bottom: 8px; line-height: 1.5; }
-  .msg-photo { width: 100%; border-radius: 8px; background: linear-gradient(135deg, #e0e7ff, #c7d2fe); height: 140px; display: flex; align-items: center; justify-content: center; color: #6366f1; font-size: 13px; font-weight: 500; }
+  .msg-photo { width: 100%; border-radius: 8px; background: linear-gradient(135deg, #e0e7ff, #c7d2fe); height: 130px; display: flex; align-items: center; justify-content: center; color: #6366f1; font-size: 13px; font-weight: 600; }
   .msg-via { font-size: 11px; color: #94a3b8; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
-  .tg-icon { background: #29b6f6; color: #fff; border-radius: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; }
-
-  .comment-input { display: flex; gap: 8px; margin-top: 8px; }
+  .tg-icon { background: #29b6f6; color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 800; }
+  .comment-input { display: flex; gap: 8px; margin-top: 10px; }
   .comment-input input { flex: 1; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; outline: none; }
-  .comment-input input:focus { border-color: #2563eb; }
-  .comment-input button { background: #2563eb; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .comment-input button { background: #2563eb; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
 
-  /* SCREEN: DASHBOARD */
+  /* DASHBOARD */
   .dash-header { background: linear-gradient(135deg, #1e293b, #334155); color: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
   .dash-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
   .dash-header p { font-size: 13px; color: #94a3b8; }
   .dash-kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
   .kpi-card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-  .kpi-num { font-size: 28px; font-weight: 700; color: #1a1a1a; }
+  .kpi-num { font-size: 28px; font-weight: 800; }
   .kpi-label { font-size: 12px; color: #64748b; margin-top: 2px; }
   .kpi-card.accent { background: #2563eb; }
   .kpi-card.accent .kpi-num, .kpi-card.accent .kpi-label { color: #fff; }
 
   .tech-table { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 16px; }
-  .tech-table-header { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 12px 16px; background: #f8fafc; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; }
-  .tech-row { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 12px 16px; border-top: 1px solid #f1f5f9; align-items: center; }
-  .tech-name { font-size: 14px; font-weight: 500; }
+  .tech-table-header { display: grid; grid-template-columns: 2fr 1fr 1.2fr; padding: 10px 16px; background: #f8fafc; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
+  .tech-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr; padding: 12px 16px; border-top: 1px solid #f1f5f9; align-items: center; }
+  .tech-name { font-size: 14px; font-weight: 600; }
   .tech-city { font-size: 11px; color: #94a3b8; margin-top: 1px; }
-  .tech-count { font-size: 14px; font-weight: 600; text-align: center; }
-  .progress-wrap { display: flex; align-items: center; gap: 6px; }
+  .tech-count { font-size: 14px; font-weight: 700; text-align: center; }
+  .progress-wrap { display: flex; align-items: center; gap: 5px; }
   .progress-bar { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 3px; }
-  .progress-pct { font-size: 12px; font-weight: 600; min-width: 32px; text-align: right; }
+  .progress-pct { font-size: 12px; font-weight: 700; min-width: 30px; text-align: right; }
 
   /* BOTTOM NAV */
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e2e8f0; display: flex; max-width: 430px; margin: 0 auto; }
-  .bottom-nav button { flex: 1; padding: 12px 8px 16px; border: none; background: none; font-size: 10px; font-weight: 500; color: #94a3b8; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e2e8f0; display: flex; max-width: 430px; margin: 0 auto; z-index: 50; }
+  .bottom-nav button { flex: 1; padding: 10px 8px 14px; border: none; background: none; font-size: 10px; font-weight: 600; color: #94a3b8; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
   .bottom-nav button.active { color: #2563eb; }
   .bottom-nav button svg { width: 22px; height: 22px; }
-  .pb { padding-bottom: 80px; }
-
-  .divider { height: 1px; background: #f1f5f9; margin: 8px 0; }
-  .chip { display: inline-block; background: #f1f5f9; color: #64748b; font-size: 11px; padding: 3px 8px; border-radius: 6px; margin-right: 4px; }
 </style>
 </head>
 <body>
 
-<!-- TOP TABS -->
 <div class="nav">
-  <button class="active" onclick="showScreen('technician')">📱 Техник</button>
-  <button onclick="showScreen('detail')">📋 Заказ</button>
-  <button onclick="showScreen('dashboard')">📊 Руководитель</button>
+  <button class="active" onclick="show('technician')">📱 Техник</button>
+  <button onclick="show('detail')">📋 Заказ</button>
+  <button onclick="show('dashboard')">📊 Руководитель</button>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- SCREEN 1: TECHNICIAN VIEW                     -->
-<!-- ══════════════════════════════════════════════ -->
-<div class="screen active pb" id="screen-technician">
+<!-- ══════════════════════════════════════════════
+     ЭКРАН 1: СПИСОК ЗАКАЗОВ ТЕХНИКА
+══════════════════════════════════════════════ -->
+<div class="screen active" id="screen-technician">
 
   <div class="header-block">
     <div class="greeting">Добрый день,</div>
     <div class="name">Петров Михаил</div>
     <div class="stats">
-      <div class="stat">
-        <div class="stat-num">8</div>
-        <div class="stat-label">Активных</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num" style="color:#f87171">2</div>
-        <div class="stat-label">Срочных</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num" style="color:#4ade80">5</div>
-        <div class="stat-label">В срок</div>
-      </div>
+      <div class="stat"><div class="stat-num">8</div><div class="stat-label">Активных</div></div>
+      <div class="stat"><div class="stat-num" style="color:#f87171">2</div><div class="stat-label">Срочных</div></div>
+      <div class="stat"><div class="stat-num" style="color:#4ade80">6</div><div class="stat-label">В срок</div></div>
     </div>
   </div>
 
   <div class="section-title">🔴 Срочно — сегодня</div>
 
-  <div class="order-card red" onclick="showScreen('detail')">
-    <div class="card-top">
+  <!-- КАРТОЧКА 1 -->
+  <div class="order-card red" onclick="show('detail')">
+    <div class="card-row1">
       <div class="card-patient">Захаров В.Н.</div>
       <span class="badge red">Сегодня 18:00</span>
     </div>
-    <div class="card-work">Металлокерамика 4 ед. (зубы 14–17)</div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>сегодня 19:30</strong></div>
+    <div class="card-work">Металлокерамика</div>
+    <div class="card-chips">
+      <span class="chip units">4 единицы</span>
+      <span class="chip teeth">Зубы 14, 15, 16, 17</span>
+    </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val red">Сегодня 18:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val red">Сегодня 19:30</div>
+      </div>
+    </div>
+    <div class="card-row5">
       <span class="badge blue">В работе</span>
     </div>
   </div>
 
-  <div class="order-card red" onclick="showScreen('detail')">
-    <div class="card-top">
+  <!-- КАРТОЧКА 2 — ПРОСРОЧЕНА -->
+  <div class="order-card red" onclick="show('detail')">
+    <div class="card-row1">
       <div class="card-patient">Смирнова А.К.</div>
-      <span class="badge red">Просрочен!</span>
+      <span class="badge red">⚠ Просрочен!</span>
     </div>
-    <div class="card-work">Циркониевая коронка 1 ед. (зуб 36)</div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>завтра 10:00</strong></div>
+    <div class="card-work">Циркониевая коронка</div>
+    <div class="card-chips">
+      <span class="chip units">1 единица</span>
+      <span class="chip teeth">Зуб 36</span>
+    </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val red">Вчера 18:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val">Завтра 10:00</div>
+      </div>
+    </div>
+    <div class="card-row5">
       <span class="badge gray">Новый</span>
     </div>
   </div>
 
   <div class="section-title">🟡 Завтра</div>
 
+  <!-- КАРТОЧКА 3 -->
   <div class="order-card yellow">
-    <div class="card-top">
+    <div class="card-row1">
       <div class="card-patient">Морозов Д.С.</div>
       <span class="badge yellow">Завтра 12:00</span>
     </div>
-    <div class="card-work">Съёмный протез верхней челюсти</div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>послезавтра 14:00</strong></div>
+    <div class="card-work">Съёмный протез</div>
+    <div class="card-chips">
+      <span class="chip units">Верхняя челюсть</span>
+    </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val yellow">Завтра 12:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val">22 мая 14:00</div>
+      </div>
+    </div>
+    <div class="card-row5">
       <span class="badge blue">В работе</span>
     </div>
   </div>
 
-  <div class="order-card yellow">
-    <div class="card-top">
+  <!-- КАРТОЧКА 4 — с фото от врача -->
+  <div class="order-card yellow" onclick="show('detail')">
+    <div class="card-row1">
       <div class="card-patient">Новикова Е.П.</div>
       <span class="badge yellow">Завтра 14:00</span>
     </div>
-    <div class="card-work">Металлокерамика 3 ед. (зубы 24–26) <span class="card-msg">📎 фото от врача</span></div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>22 мая</strong></div>
+    <div class="card-work">Металлокерамика</div>
+    <div class="card-chips">
+      <span class="chip units">3 единицы</span>
+      <span class="chip teeth">Зубы 24, 25, 26</span>
+      <span class="chip msg">📎 фото от врача</span>
+    </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val yellow">Завтра 14:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val">22 мая 11:00</div>
+      </div>
+    </div>
+    <div class="card-row5">
       <span class="badge blue">В работе</span>
     </div>
   </div>
 
   <div class="section-title">🟢 Впереди</div>
 
+  <!-- КАРТОЧКА 5 -->
   <div class="order-card green">
-    <div class="card-top">
+    <div class="card-row1">
       <div class="card-patient">Козлов И.В.</div>
       <span class="badge green">23 мая</span>
     </div>
-    <div class="card-work">Имплант-коронка цирконий (зуб 46)</div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>25 мая</strong></div>
+    <div class="card-work">Имплант-коронка циркониевая</div>
+    <div class="card-chips">
+      <span class="chip units">1 единица</span>
+      <span class="chip teeth">Зуб 46</span>
+    </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val">23 мая 18:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val">25 мая 12:00</div>
+      </div>
+    </div>
+    <div class="card-row5">
       <span class="badge gray">Новый</span>
     </div>
   </div>
 
+  <!-- КАРТОЧКА 6 -->
   <div class="order-card green">
-    <div class="card-top">
+    <div class="card-row1">
       <div class="card-patient">Лебедева О.А.</div>
       <span class="badge green">24 мая</span>
     </div>
-    <div class="card-work">Виниры 4 ед. (зубы 12–22)</div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>26 мая</strong></div>
+    <div class="card-work">Виниры керамические</div>
+    <div class="card-chips">
+      <span class="chip units">4 единицы</span>
+      <span class="chip teeth">Зубы 12, 11, 21, 22</span>
+    </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val">24 мая 18:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val">26 мая 15:00</div>
+      </div>
+    </div>
+    <div class="card-row5">
       <span class="badge gray">Новый</span>
     </div>
   </div>
 
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- SCREEN 2: ORDER DETAIL                        -->
-<!-- ══════════════════════════════════════════════ -->
-<div class="screen pb" id="screen-detail">
+<!-- ══════════════════════════════════════════════
+     ЭКРАН 2: ДЕТАЛИ ЗАКАЗА
+══════════════════════════════════════════════ -->
+<div class="screen" id="screen-detail">
 
-  <button class="back-btn" onclick="showScreen('technician')">
-    ← Мои заказы
-  </button>
+  <button class="back-btn" onclick="show('technician')">← Мои заказы</button>
 
+  <!-- Ключевые поля крупно -->
   <div class="detail-card">
-    <h3>Информация о заказе</h3>
-    <div class="detail-row"><span class="label">Пациент</span><span class="value">Новикова Е.П.</span></div>
-    <div class="detail-row"><span class="label">Работа</span><span class="value">Металлокерамика 3 ед.</span></div>
-    <div class="detail-row"><span class="label">Зубы</span><span class="value">24–26</span></div>
-    <div class="detail-row"><span class="label">Клиника</span><span class="value">Дентал Плюс</span></div>
-    <div class="detail-row"><span class="label">Врач</span><span class="value">Соколов К.Д.</span></div>
-    <div class="detail-row"><span class="label">Дедлайн</span><span class="value red">Завтра, 14:00</span></div>
-    <div class="detail-row"><span class="label">Приём пациента</span><span class="value">22 мая, 11:00</span></div>
-    <div class="detail-row"><span class="label">Описание</span><span class="value">Цвет A2, ориентир — соседние зубы</span></div>
+    <h3>Заказ · Новикова Е.П.</h3>
+    <div class="detail-highlight">
+      <div class="detail-highlight-grid">
+        <div class="dh-item">
+          <div class="dh-label">Работа</div>
+          <div class="dh-value" style="font-size:13px;margin-top:4px">Металлокерамика</div>
+        </div>
+        <div class="dh-item">
+          <div class="dh-label">Единиц</div>
+          <div class="dh-value">3</div>
+        </div>
+        <div class="dh-item">
+          <div class="dh-label">Зубы</div>
+          <div class="dh-value" style="font-size:14px">24–26</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-row"><span class="lbl">Пациент</span><span class="val">Новикова Е.П.</span></div>
+    <div class="detail-row"><span class="lbl">Клиника</span><span class="val">Дентал Плюс</span></div>
+    <div class="detail-row"><span class="lbl">Врач</span><span class="val">Соколов К.Д.</span></div>
+    <div class="detail-row"><span class="lbl">Сдать до</span><span class="val red">Завтра, 14:00</span></div>
+    <div class="detail-row"><span class="lbl">Приём пациента</span><span class="val">22 мая, 11:00</span></div>
+    <div class="detail-row"><span class="lbl">Описание</span><span class="val">Цвет A2, ориентир — соседние зубы</span></div>
   </div>
 
+  <!-- Статус -->
   <div class="detail-card">
     <h3>Статус работы</h3>
     <div class="status-row">
@@ -259,7 +379,7 @@
     </div>
   </div>
 
-  <!-- MESSAGES FROM DOCTOR -->
+  <!-- Сообщения от врача -->
   <div class="msg-block">
     <h3>📨 Сообщения от врача</h3>
 
@@ -270,7 +390,7 @@
       </div>
       <div class="msg-text">По Новиковой — цвет уточнил, смотрите фото. Ориентируйтесь на зуб 23, не на шкалу.</div>
       <div class="msg-photo">📷 Фото от врача (цвет зубов)</div>
-      <div class="msg-via"><span class="tg-icon">TG</span> Получено из Telegram лаборатории → переслано автоматически</div>
+      <div class="msg-via"><span class="tg-icon">TG</span> Из Telegram лаборатории → переслано автоматически</div>
     </div>
 
     <div class="msg-item">
@@ -278,8 +398,8 @@
         <span class="msg-from">Соколов К.Д.</span>
         <span class="msg-time">Вчера, 17:42</span>
       </div>
-      <div class="msg-text">Новикова — прикус немного изменился после слепка, надо учесть при окклюзии.</div>
-      <div class="msg-via"><span class="tg-icon">TG</span> Получено из Telegram лаборатории → переслано автоматически</div>
+      <div class="msg-text">Новикова — прикус немного изменился после слепка, учтите при окклюзии.</div>
+      <div class="msg-via"><span class="tg-icon">TG</span> Из Telegram лаборатории → переслано автоматически</div>
     </div>
 
     <div class="comment-input">
@@ -290,10 +410,10 @@
 
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- SCREEN 3: MANAGER DASHBOARD                   -->
-<!-- ══════════════════════════════════════════════ -->
-<div class="screen pb" id="screen-dashboard">
+<!-- ══════════════════════════════════════════════
+     ЭКРАН 3: ДАШБОРД РУКОВОДИТЕЛЯ
+══════════════════════════════════════════════ -->
+<div class="screen" id="screen-dashboard">
 
   <div class="dash-header">
     <h2>Лаборатория Москва</h2>
@@ -327,94 +447,108 @@
       <div style="text-align:center">Заказов</div>
       <div>В срок</div>
     </div>
-
     <div class="tech-row">
       <div><div class="tech-name">Петров М.А.</div><div class="tech-city">Москва</div></div>
       <div class="tech-count">24</div>
       <div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:92%;background:#22c55e"></div></div><span class="progress-pct" style="color:#16a34a">92%</span></div></div>
     </div>
-
     <div class="tech-row">
       <div><div class="tech-name">Иванов С.В.</div><div class="tech-city">Москва</div></div>
       <div class="tech-count">31</div>
       <div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:87%;background:#22c55e"></div></div><span class="progress-pct" style="color:#16a34a">87%</span></div></div>
     </div>
-
     <div class="tech-row">
       <div><div class="tech-name">Сидоров К.Н.</div><div class="tech-city">Москва</div></div>
       <div class="tech-count">19</div>
       <div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:79%;background:#f59e0b"></div></div><span class="progress-pct" style="color:#d97706">79%</span></div></div>
     </div>
-
     <div class="tech-row">
       <div><div class="tech-name">Козлова Т.Р.</div><div class="tech-city">Москва</div></div>
       <div class="tech-count">22</div>
       <div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:64%;background:#f59e0b"></div></div><span class="progress-pct" style="color:#d97706">64%</span></div></div>
     </div>
-
     <div class="tech-row">
       <div><div class="tech-name">Фёдоров А.П.</div><div class="tech-city">Москва</div></div>
       <div class="tech-count">28</div>
       <div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:46%;background:#ef4444"></div></div><span class="progress-pct" style="color:#dc2626">46%</span></div></div>
     </div>
-
   </div>
 
   <div class="section-title">Срочные заказы — сегодня</div>
 
   <div class="order-card red">
-    <div class="card-top">
+    <div class="card-row1">
       <div class="card-patient">Захаров В.Н.</div>
       <span class="badge red">Сегодня 18:00</span>
     </div>
-    <div class="card-work">Металлокерамика 4 ед. · <strong>Петров М.А.</strong></div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>сегодня 19:30</strong></div>
-      <span class="badge blue">В работе</span>
+    <div class="card-work">Металлокерамика <span style="font-size:12px;color:#64748b;font-weight:400">· Петров М.А.</span></div>
+    <div class="card-chips">
+      <span class="chip units">4 единицы</span>
+      <span class="chip teeth">Зубы 14, 15, 16, 17</span>
     </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val red">Сегодня 18:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val red">Сегодня 19:30</div>
+      </div>
+    </div>
+    <div class="card-row5"><span class="badge blue">В работе</span></div>
   </div>
 
   <div class="order-card red">
-    <div class="card-top">
+    <div class="card-row1">
       <div class="card-patient">Смирнова А.К.</div>
-      <span class="badge red">Просрочен!</span>
+      <span class="badge red">⚠ Просрочен!</span>
     </div>
-    <div class="card-work">Цирконий 1 ед. · <strong>Фёдоров А.П.</strong></div>
-    <div class="card-bottom">
-      <div class="card-deadline">Приём: <strong>завтра 10:00</strong></div>
-      <span class="badge gray">Новый</span>
+    <div class="card-work">Циркониевая коронка <span style="font-size:12px;color:#64748b;font-weight:400">· Фёдоров А.П.</span></div>
+    <div class="card-chips">
+      <span class="chip units">1 единица</span>
+      <span class="chip teeth">Зуб 36</span>
     </div>
+    <div class="card-dates">
+      <div class="card-date-item">
+        <div class="card-date-label">Сдать до</div>
+        <div class="card-date-val red">Вчера 18:00</div>
+      </div>
+      <div class="card-date-item">
+        <div class="card-date-label">Приём пациента</div>
+        <div class="card-date-val">Завтра 10:00</div>
+      </div>
+    </div>
+    <div class="card-row5"><span class="badge gray">Новый</span></div>
   </div>
 
 </div>
 
-<!-- BOTTOM NAV (for technician screens) -->
-<div class="bottom-nav" id="bottom-nav">
-  <button class="active" onclick="showScreen('technician')">
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bnav">
+  <button class="active" onclick="show('technician')">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
     Мои заказы
   </button>
-  <button onclick="showScreen('detail')">
+  <button onclick="show('detail')">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
     Сообщения
   </button>
-  <button onclick="showScreen('dashboard')">
+  <button onclick="show('dashboard')">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
     Дашборд
   </button>
 </div>
 
 <script>
-  function showScreen(name) {
+  function show(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
-
     document.getElementById('screen-' + name).classList.add('active');
-
     const idx = { technician: 0, detail: 1, dashboard: 2 };
     document.querySelectorAll('.nav button')[idx[name]].classList.add('active');
-    document.querySelectorAll('.bottom-nav button')[idx[name]]?.classList.add('active');
+    document.querySelectorAll('.bottom-nav button')[idx[name]].classList.add('active');
   }
 </script>
 </body>
