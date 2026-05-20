@@ -289,10 +289,8 @@ function logout() {
 function startApp() {
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  const isAdmin = currentUser.role === 'admin';
   document.getElementById('top-name').textContent = currentUser.name;
   document.getElementById('top-sub').textContent = currentUser.city;
-  document.getElementById('bnav-dash').style.display = isAdmin ? 'flex' : 'none';
   loadOrders();
 }
 
