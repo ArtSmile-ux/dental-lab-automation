@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1e293b">
+<title>ArtSmile Lab</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f0f2f5; color:#1a1a1a; max-width:430px; margin:0 auto; min-height:100vh; }
+
+  /* ── ЭКРАН ЗАГРУЗКИ ── */
+  #screen-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#1e293b; color:#fff; gap:16px; }
+  .logo { font-size:32px; font-weight:800; letter-spacing:-1px; }
+  .logo span { color:#3b82f6; }
+  .subtitle { font-size:14px; color:#94a3b8; }
+  .spinner { width:32px; height:32px; border:3px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; margin-top:8px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ── ЭКРАН ВХОДА ── */
+  #screen-login { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:#1e293b; padding:32px 24px; }
+  .login-logo { font-size:28px; font-weight:800; color:#fff; margin-bottom:6px; }
+  .login-logo span { color:#3b82f6; }
+  .login-sub { font-size:13px; color:#64748b; margin-bottom:40px; }
+  .pin-label { font-size:14px; color:#94a3b8; margin-bottom:16px; text-align:center; }
+  .pin-dots { display:flex; gap:14px; margin-bottom:32px; }
+  .pin-dot { width:18px; height:18px; border-radius:50%; background:rgba(255,255,255,.15); border:2px solid rgba(255,255,255,.2); transition:all .15s; }
+  .pin-dot.filled { background:#3b82f6; border-color:#3b82f6; }
+  .pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:100%; max-width:280px; }
+  .key { background:rgba(255,255,255,.08); border:none; border-radius:16px; padding:20px; font-size:22px; font-weight:600; color:#fff; cursor:pointer; transition:background .1s; }
+  .key:active { background:rgba(255,255,255,.2); }
+  .key.del { font-size:18px; color:#94a3b8; }
+  .login-error { color:#f87171; font-size:13px; margin-top:12px; min-height:20px; }
+
+  /* ── НАВИГАЦИЯ ── */
+  .top-bar { background:#fff; border-bottom:1px solid #e2e8f0; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+  .top-bar-title { font-size:16px; font-weight:700; }
+  .top-bar-sub { font-size:12px; color:#64748b; margin-top:1px; }
+  .btn-logout { background:none; border:none; color:#94a3b8; font-size:13px; cursor:pointer; padding:4px 8px; }
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:430px; margin:0 auto; background:#fff; border-top:1px solid #e2e8f0; display:flex; z-index:50; }
+  .bnav-btn { flex:1; padding:10px 8px 14px; border:none; background:none; font-size:10px; font-weight:600; color:#94a3b8; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .bnav-btn.active { color:#2563eb; }
+  .bnav-btn svg { width:22px; height:22px; }
+
+  /* ── ЭКРАНЫ ── */
+  .screen { display:none; padding:16px; padding-bottom:90px; }
+  .screen.active { display:block; }
+
+  /* ── ХЕДЕР ТЕХНИКА ── */
+  .tech-header { background:#1e293b; color:#fff; border-radius:16px; padding:20px; margin-bottom:16px; }
+  .tech-header .hi { font-size:13px; color:#94a3b8; }
+  .tech-header .name { font-size:20px; font-weight:700; margin-top:2px; }
+  .tech-header .stats { display:flex; gap:10px; margin-top:14px; }
+  .stat-box { background:rgba(255,255,255,.1); border-radius:10px; padding:10px 12px; flex:1; text-align:center; }
+  .stat-num { font-size:22px; font-weight:700; }
+  .stat-lbl { font-size:11px; color:#94a3b8; margin-top:2px; }
+
+  .section-title { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.6px; margin:16px 0 8px; }
+
+  /* ── КАРТОЧКА ЗАКАЗА ── */
+  .order-card { background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:10px; border-left:4px solid #ccc; box-shadow:0 1px 4px rgba(0,0,0,.07); cursor:pointer; transition:transform .1s; }
+  .order-card:active { transform:scale(.98); }
+  .order-card.red { border-left-color:#ef4444; }
+  .order-card.yellow { border-left-color:#f59e0b; }
+  .order-card.green { border-left-color:#22c55e; }
+  .card-r1 { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+  .card-patient { font-size:15px; font-weight:700; }
+  .card-work { font-size:14px; font-weight:600; color:#1e293b; margin-bottom:7px; }
+  .card-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px; }
+  .chip { display:inline-flex; align-items:center; font-size:12px; font-weight:600; padding:3px 9px; border-radius:8px; }
+  .chip.u { background:#ede9fe; color:#6d28d9; }
+  .chip.t { background:#fef3c7; color:#92400e; }
+  .chip.m { background:#eff6ff; color:#2563eb; }
+  .card-dates { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:9px; }
+  .date-box { background:#f8fafc; border-radius:8px; padding:6px 10px; }
+  .date-lbl { font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-bottom:2px; }
+  .date-val { font-size:13px; font-weight:700; }
+  .date-val.red { color:#dc2626; }
+  .date-val.yellow { color:#d97706; }
+  .badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; }
+  .badge.red { background:#fee2e2; color:#dc2626; }
+  .badge.yellow { background:#fef3c7; color:#d97706; }
+  .badge.green { background:#dcfce7; color:#16a34a; }
+  .badge.blue { background:#dbeafe; color:#2563eb; }
+  .badge.gray { background:#f1f5f9; color:#64748b; }
+
+  /* ── ДЕТАЛИ ЗАКАЗА ── */
+  .back-btn { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:14px; font-weight:600; margin-bottom:16px; background:none; border:none; cursor:pointer; padding:0; }
+  .detail-card { background:#fff; border-radius:16px; padding:18px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .detail-card h3 { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; }
+  .key-fields { background:#f8fafc; border-radius:12px; padding:14px; margin-bottom:12px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .kf-item { text-align:center; }
+  .kf-lbl { font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-bottom:4px; }
+  .kf-val { font-size:15px; font-weight:800; color:#1e293b; }
+  .detail-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #f1f5f9; font-size:14px; }
+  .detail-row:last-child { border-bottom:none; }
+  .dl { color:#64748b; font-size:13px; }
+  .dv { font-weight:600; text-align:right; max-width:60%; }
+  .dv.red { color:#dc2626; }
+  .status-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .status-btn { flex:1; min-width:70px; padding:10px 4px; border-radius:10px; border:2px solid #e2e8f0; background:#f8fafc; font-size:11px; font-weight:700; color:#64748b; cursor:pointer; text-align:center; transition:all .15s; }
+  .status-btn.active { border-color:#2563eb; background:#eff6ff; color:#2563eb; }
+  .status-btn:active { transform:scale(.96); }
+
+  /* ── СООБЩЕНИЯ ── */
+  .msg-item { background:#f8fafc; border-radius:12px; padding:12px; margin-bottom:8px; }
+  .msg-meta { display:flex; justify-content:space-between; margin-bottom:6px; }
+  .msg-from { font-size:12px; font-weight:700; color:#2563eb; }
+  .msg-time { font-size:11px; color:#94a3b8; }
+  .msg-text { font-size:13px; color:#334155; line-height:1.5; margin-bottom:6px; }
+  .tg-badge { background:#29b6f6; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; font-weight:800; }
+  .msg-via { font-size:11px; color:#94a3b8; display:flex; align-items:center; gap:4px; }
+  .comment-form { display:flex; gap:8px; margin-top:10px; }
+  .comment-form input { flex:1; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; font-size:14px; outline:none; }
+  .comment-form input:focus { border-color:#2563eb; }
+  .comment-form button { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer; }
+
+  /* ── ДАШБОРД ── */
+  .dash-header { background:linear-gradient(135deg,#1e293b,#334155); color:#fff; border-radius:16px; padding:20px; margin-bottom:16px; }
+  .dash-header h2 { font-size:18px; font-weight:700; }
+  .dash-header p { font-size:13px; color:#94a3b8; margin-top:2px; }
+  .kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .kpi-card { background:#fff; border-radius:14px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .kpi-card.accent { background:#2563eb; }
+  .kpi-num { font-size:28px; font-weight:800; }
+  .kpi-card.accent .kpi-num, .kpi-card.accent .kpi-lbl { color:#fff; }
+  .kpi-lbl { font-size:12px; color:#64748b; margin-top:2px; }
+
+  /* ── СОСТОЯНИЯ ── */
+  .empty { text-align:center; padding:40px 20px; color:#94a3b8; }
+  .empty svg { width:48px; height:48px; margin-bottom:12px; opacity:.4; }
+  .loading-text { text-align:center; padding:40px; color:#94a3b8; }
+</style>
+</head>
+<body>
+
+<!-- ЗАГРУЗКА -->
+<div id="screen-loading">
+  <div class="logo">Art<span>Smile</span></div>
+  <div class="subtitle">Зуботехническая лаборатория</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- ВХОД -->
+<div id="screen-login">
+  <div class="login-logo">Art<span>Smile</span></div>
+  <div class="login-sub">Введите PIN-код для входа</div>
+  <div class="pin-label">Ваш PIN</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-keypad">
+    <button class="key" onclick="pinKey('1')">1</button>
+    <button class="key" onclick="pinKey('2')">2</button>
+    <button class="key" onclick="pinKey('3')">3</button>
+    <button class="key" onclick="pinKey('4')">4</button>
+    <button class="key" onclick="pinKey('5')">5</button>
+    <button class="key" onclick="pinKey('6')">6</button>
+    <button class="key" onclick="pinKey('7')">7</button>
+    <button class="key" onclick="pinKey('8')">8</button>
+    <button class="key" onclick="pinKey('9')">9</button>
+    <button class="key" onclick="pinKey('')"></button>
+    <button class="key" onclick="pinKey('0')">0</button>
+    <button class="key del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="login-error" id="login-error"></div>
+</div>
+
+<!-- ПРИЛОЖЕНИЕ -->
+<div id="app" style="display:none">
+  <div class="top-bar">
+    <div>
+      <div class="top-bar-title" id="top-name">Мои заказы</div>
+      <div class="top-bar-sub" id="top-sub"></div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Выйти</button>
+  </div>
+
+  <!-- ЭКРАН: ЗАКАЗЫ -->
+  <div class="screen active" id="screen-orders">
+    <div id="orders-content"><div class="loading-text">Загрузка...</div></div>
+  </div>
+
+  <!-- ЭКРАН: ДЕТАЛИ ЗАКАЗА -->
+  <div class="screen" id="screen-detail">
+    <button class="back-btn" onclick="showOrders()">← Мои заказы</button>
+    <div id="detail-content"></div>
+  </div>
+
+  <!-- ЭКРАН: ДАШБОРД -->
+  <div class="screen" id="screen-dashboard">
+    <div id="dashboard-content"><div class="loading-text">Загрузка...</div></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="bnav-btn active" id="bnav-orders" onclick="showOrders()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Заказы
+    </button>
+    <button class="bnav-btn" id="bnav-dash" onclick="showDashboard()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Дашборд
+    </button>
+  </div>
+</div>
+
+<script>
+const API = 'http://5.42.119.226:8000';
+let pin = '';
+let currentUser = null;
+let orders = [];
+let currentOrderId = null;
+
+// ── УТИЛИТЫ ──
+function fmt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (d - now) / 86400000;
+  const dd = d.getDate().toString().padStart(2,'0');
+  const mm = (d.getMonth()+1).toString().padStart(2,'0');
+  const hh = d.getHours().toString().padStart(2,'0');
+  const min = d.getMinutes().toString().padStart(2,'0');
+  if (diff < -0.1) return 'Просрочен!';
+  if (diff < 1) return `Сегодня ${hh}:${min}`;
+  if (diff < 2) return `Завтра ${hh}:${min}`;
+  return `${dd}.${mm} ${hh}:${min}`;
+}
+function urgency(deadline) {
+  const diff = (new Date(deadline) - new Date()) / 86400000;
+  if (diff < 0) return 'red';
+  if (diff < 1) return 'red';
+  if (diff < 2) return 'yellow';
+  return 'green';
+}
+function statusLabel(s) {
+  return {новый:'Новый',в_работе:'В работе',на_проверке:'На проверке',готово:'Готово',сдано:'Сдано'}[s] || s;
+}
+function statusBadge(s) {
+  const cls = {новый:'gray',в_работе:'blue',готово:'green',сдано:'green',на_проверке:'yellow'}[s]||'gray';
+  return `<span class="badge ${cls}">${statusLabel(s)}</span>`;
+}
+
+// ── PIN ──
+function pinKey(k) {
+  if (!k || pin.length >= 4) return;
+  pin += k;
+  updateDots();
+  if (pin.length === 4) doLogin();
+}
+function pinDel() { pin = pin.slice(0,-1); updateDots(); }
+function updateDots() {
+  for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i < pin.length);
+}
+async function doLogin() {
+  document.getElementById('login-error').textContent = '';
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({pin})
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    currentUser = data.technician;
+    localStorage.setItem('pin', pin);
+    localStorage.setItem('user', JSON.stringify(currentUser));
+    startApp();
+  } catch {
+    document.getElementById('login-error').textContent = 'Неверный PIN, попробуйте ещё раз';
+    pin = ''; updateDots();
+  }
+}
+function logout() {
+  localStorage.clear(); currentUser = null; pin = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  updateDots();
+}
+
+// ── ЗАПУСК ──
+function startApp() {
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const isAdmin = currentUser.role === 'admin';
+  document.getElementById('top-name').textContent = currentUser.name;
+  document.getElementById('top-sub').textContent = currentUser.city;
+  document.getElementById('bnav-dash').style.display = isAdmin ? 'flex' : 'none';
+  loadOrders();
+}
+
+// ── ЗАКАЗЫ ──
+async function loadOrders() {
+  try {
+    const r = await fetch(`${API}/orders`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    orders = data.orders;
+    renderOrders();
+  } catch { document.getElementById('orders-content').innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+}
+
+function renderOrders() {
+  const red = orders.filter(o => urgency(o.deadline) === 'red');
+  const yellow = orders.filter(o => urgency(o.deadline) === 'yellow');
+  const green = orders.filter(o => urgency(o.deadline) === 'green');
+
+  // Шапка
+  const headerHTML = `
+  <div class="tech-header">
+    <div class="hi">Добрый день,</div>
+    <div class="name">${currentUser.name}</div>
+    <div class="stats">
+      <div class="stat-box"><div class="stat-num">${orders.length}</div><div class="stat-lbl">Активных</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:#f87171">${red.length}</div><div class="stat-lbl">Срочных</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:#4ade80">${green.length}</div><div class="stat-lbl">В срок</div></div>
+    </div>
+  </div>`;
+
+  let html = headerHTML;
+
+  if (red.length) { html += `<div class="section-title">🔴 Срочно</div>`; red.forEach(o => html += cardHTML(o)); }
+  if (yellow.length) { html += `<div class="section-title">🟡 Завтра</div>`; yellow.forEach(o => html += cardHTML(o)); }
+  if (green.length) { html += `<div class="section-title">🟢 Впереди</div>`; green.forEach(o => html += cardHTML(o)); }
+  if (!orders.length) html += `<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg><div>Нет активных заказов</div></div>`;
+
+  document.getElementById('orders-content').innerHTML = html;
+}
+
+function cardHTML(o) {
+  const u = urgency(o.deadline);
+  const dl = fmt(o.deadline);
+  const dlClass = u === 'red' ? 'red' : u === 'yellow' ? 'yellow' : '';
+  const hasMsgs = o.messages && o.messages.length > 0;
+  return `
+  <div class="order-card ${u}" onclick="showDetail('${o.id}')">
+    <div class="card-r1">
+      <div class="card-patient">${o.patient_name}</div>
+      <span class="badge ${u === 'red' ? 'red' : u === 'yellow' ? 'yellow' : 'green'}">${dl}</span>
+    </div>
+    <div class="card-work">${o.work_type}</div>
+    <div class="card-chips">
+      <span class="chip u">${o.units} ${o.units === 1 ? 'единица' : 'единицы'}</span>
+      <span class="chip t">Зубы ${o.teeth}</span>
+      ${hasMsgs ? `<span class="chip m">📎 от врача</span>` : ''}
+    </div>
+    <div class="card-dates">
+      <div class="date-box"><div class="date-lbl">Сдать до</div><div class="date-val ${dlClass}">${dl}</div></div>
+      <div class="date-box"><div class="date-lbl">Приём</div><div class="date-val">${fmt(o.appointment_at)}</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center">${statusBadge(o.status)}</div>
+  </div>`;
+}
+
+// ── ДЕТАЛИ ──
+function showDetail(id) {
+  currentOrderId = id;
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-detail').classList.add('active');
+  document.getElementById('bnav-orders').classList.remove('active');
+
+  const statuses = ['новый','в_работе','готово','сдано'];
+  const statusBtns = statuses.map(s =>
+    `<button class="status-btn ${o.status === s ? 'active' : ''}" onclick="changeStatus('${id}','${s}')">${statusLabel(s)}</button>`
+  ).join('');
+
+  const msgs = (o.messages||[]).map(m => `
+    <div class="msg-item">
+      <div class="msg-meta"><span class="msg-from">${m.from}</span><span class="msg-time">${m.time.slice(11,16)}</span></div>
+      <div class="msg-text">${m.text}</div>
+      ${m.has_photo ? `<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin-bottom:6px">📷 Фото от врача</div>` : ''}
+      <div class="msg-via"><span class="tg-badge">TG</span> Из Telegram → переслано автоматически</div>
+    </div>`).join('');
+
+  const comments = (o.comments||[]).map(c => `
+    <div class="msg-item">
+      <div class="msg-meta"><span class="msg-from">${c.author}</span><span class="msg-time">${c.created_at.slice(11,16)}</span></div>
+      <div class="msg-text">${c.text}</div>
+    </div>`).join('');
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-card">
+      <h3>Заказ · ${o.patient_name}</h3>
+      <div class="key-fields">
+        <div class="kf-item"><div class="kf-lbl">Работа</div><div class="kf-val" style="font-size:12px">${o.work_type}</div></div>
+        <div class="kf-item"><div class="kf-lbl">Единиц</div><div class="kf-val">${o.units}</div></div>
+        <div class="kf-item"><div class="kf-lbl">Зубы</div><div class="kf-val" style="font-size:13px">${o.teeth}</div></div>
+      </div>
+      <div class="detail-row"><span class="dl">Клиника</span><span class="dv">${o.clinic_name}</span></div>
+      <div class="detail-row"><span class="dl">Врач</span><span class="dv">${o.doctor_name}</span></div>
+      <div class="detail-row"><span class="dl">Сдать до</span><span class="dv red">${fmt(o.deadline)}</span></div>
+      <div class="detail-row"><span class="dl">Приём пациента</span><span class="dv">${fmt(o.appointment_at)}</span></div>
+      <div class="detail-row"><span class="dl">Описание</span><span class="dv">${o.description}</span></div>
+    </div>
+    <div class="detail-card">
+      <h3>Статус работы</h3>
+      <div class="status-row">${statusBtns}</div>
+    </div>
+    ${msgs || comments ? `
+    <div class="detail-card">
+      <h3>📨 Сообщения от врача</h3>
+      ${msgs}
+      ${comments}
+      <div class="comment-form">
+        <input type="text" id="comment-input" placeholder="Написать комментарий...">
+        <button onclick="addComment()">→</button>
+      </div>
+    </div>` : `
+    <div class="detail-card">
+      <h3>💬 Комментарии</h3>
+      ${comments}
+      <div class="comment-form">
+        <input type="text" id="comment-input" placeholder="Написать комментарий...">
+        <button onclick="addComment()">→</button>
+      </div>
+    </div>`}
+  `;
+}
+
+async function changeStatus(id, status) {
+  try {
+    await fetch(`${API}/orders/${id}/status`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({status})
+    });
+    const o = orders.find(x => x.id === id);
+    if (o) o.status = status;
+    showDetail(id);
+  } catch { alert('Ошибка при смене статуса'); }
+}
+
+async function addComment() {
+  const input = document.getElementById('comment-input');
+  const text = input.value.trim();
+  if (!text) return;
+  try {
+    const r = await fetch(`${API}/orders/${currentOrderId}/comments`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({text})
+    });
+    const data = await r.json();
+    const o = orders.find(x => x.id === currentOrderId);
+    if (o) o.comments.push(data.comment);
+    input.value = '';
+    showDetail(currentOrderId);
+  } catch { alert('Ошибка при добавлении комментария'); }
+}
+
+function showOrders() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-orders').classList.add('active');
+  document.getElementById('bnav-orders').classList.add('active');
+  document.getElementById('bnav-dash').classList.remove('active');
+}
+
+// ── ДАШБОРД ──
+async function showDashboard() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-dashboard').classList.add('active');
+  document.getElementById('bnav-orders').classList.remove('active');
+  document.getElementById('bnav-dash').classList.add('active');
+  try {
+    const r = await fetch(`${API}/metrics`, {headers:{'x-pin':localStorage.getItem('pin')}});
+    const m = await r.json();
+    document.getElementById('dashboard-content').innerHTML = `
+      <div class="dash-header"><h2>Лаборатория Москва</h2><p>Статистика по заказам</p></div>
+      <div class="kpi-grid">
+        <div class="kpi-card accent"><div class="kpi-num">${m.total_orders}</div><div class="kpi-lbl">Всего заказов</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:#dc2626">${m.overdue}</div><div class="kpi-lbl">Просрочено</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:#2563eb">${m.in_progress}</div><div class="kpi-lbl">В работе</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:#16a34a">${m.on_time_percent}%</div><div class="kpi-lbl">В срок</div></div>
+      </div>`;
+  } catch { document.getElementById('dashboard-content').innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+}
+
+// ── ИНИЦИАЛИЗАЦИЯ ──
+window.onload = () => {
+  setTimeout(() => {
+    const savedPin = localStorage.getItem('pin');
+    const savedUser = localStorage.getItem('user');
+    document.getElementById('screen-loading').style.display = 'none';
+    if (savedPin && savedUser) {
+      pin = savedPin;
+      currentUser = JSON.parse(savedUser);
+      startApp();
+    } else {
+      document.getElementById('screen-login').style.display = 'flex';
+    }
+  }, 1000);
+};
+</script>
+</body>
+</html>

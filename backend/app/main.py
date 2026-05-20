@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-import json, os
+import os
 
 app = FastAPI(title="Dental Lab API")
 
@@ -156,9 +158,14 @@ def get_technician(x_pin: str = Header(...)):
 
 # --- ENDPOINTS ---
 
-@app.get("/")
+@app.get("/api")
 def root():
     return {"status": "Dental Lab API работает", "version": "1.0"}
+
+@app.get("/")
+def serve_frontend():
+    frontend = os.path.join(os.path.dirname(__file__), "../../frontend/index.html")
+    return FileResponse(frontend)
 
 @app.post("/auth/login")
 def login(data: PinLogin):
