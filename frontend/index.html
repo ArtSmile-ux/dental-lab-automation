@@ -11,7 +11,7 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f0f2f5; color:#1a1a1a; max-width:430px; margin:0 auto; min-height:100vh; }
 
-  /* ── ЭКРАН ЗАГРУЗКИ ── */
+  /* ── ЗАГРУЗКА ── */
   #screen-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#1e293b; color:#fff; gap:16px; }
   .logo { font-size:32px; font-weight:800; letter-spacing:-1px; }
   .logo span { color:#3b82f6; }
@@ -19,7 +19,7 @@
   .spinner { width:32px; height:32px; border:3px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; margin-top:8px; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* ── ЭКРАН ВХОДА ── */
+  /* ── ВХОД ── */
   #screen-login { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:#1e293b; padding:32px 24px; }
   .login-logo { font-size:28px; font-weight:800; color:#fff; margin-bottom:6px; }
   .login-logo span { color:#3b82f6; }
@@ -43,6 +43,9 @@
   .bnav-btn { flex:1; padding:10px 8px 14px; border:none; background:none; font-size:10px; font-weight:600; color:#94a3b8; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; }
   .bnav-btn.active { color:#2563eb; }
   .bnav-btn svg { width:22px; height:22px; }
+  .bnav-btn.add-btn { color:#fff; }
+  .bnav-btn.add-btn .add-circle { width:44px; height:44px; background:#2563eb; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:2px; box-shadow:0 4px 12px rgba(37,99,235,.4); }
+  .bnav-btn.add-btn .add-circle svg { width:24px; height:24px; color:#fff; }
 
   /* ── ЭКРАНЫ ── */
   .screen { display:none; padding:16px; padding-bottom:90px; }
@@ -56,10 +59,9 @@
   .stat-box { background:rgba(255,255,255,.1); border-radius:10px; padding:10px 12px; flex:1; text-align:center; }
   .stat-num { font-size:22px; font-weight:700; }
   .stat-lbl { font-size:11px; color:#94a3b8; margin-top:2px; }
-
   .section-title { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.6px; margin:16px 0 8px; }
 
-  /* ── КАРТОЧКА ЗАКАЗА (компактный формат) ── */
+  /* ── КАРТОЧКА ЗАКАЗА ── */
   .order-card { background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:10px; border-left:4px solid #ccc; box-shadow:0 1px 4px rgba(0,0,0,.07); cursor:pointer; transition:transform .1s; }
   .order-card:active { transform:scale(.98); }
   .order-card.red { border-left-color:#ef4444; }
@@ -84,19 +86,84 @@
   .back-btn { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:14px; font-weight:600; margin-bottom:16px; background:none; border:none; cursor:pointer; padding:0; }
   .detail-card { background:#fff; border-radius:16px; padding:18px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
   .detail-card h3 { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; }
-  .key-fields { background:#f8fafc; border-radius:12px; padding:14px; margin-bottom:12px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-  .kf-item { text-align:center; }
-  .kf-lbl { font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-bottom:4px; }
-  .kf-val { font-size:15px; font-weight:800; color:#1e293b; }
-  .detail-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #f1f5f9; font-size:14px; }
+  .detail-row { display:flex; justify-content:space-between; align-items:flex-start; padding:9px 0; border-bottom:1px solid #f1f5f9; font-size:14px; }
   .detail-row:last-child { border-bottom:none; }
-  .dl { color:#64748b; font-size:13px; }
+  .dl { color:#64748b; font-size:13px; flex-shrink:0; }
   .dv { font-weight:600; text-align:right; max-width:60%; }
   .dv.red { color:#dc2626; }
   .status-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
   .status-btn { flex:1; min-width:70px; padding:10px 4px; border-radius:10px; border:2px solid #e2e8f0; background:#f8fafc; font-size:11px; font-weight:700; color:#64748b; cursor:pointer; text-align:center; transition:all .15s; }
   .status-btn.active { border-color:#2563eb; background:#eff6ff; color:#2563eb; }
   .status-btn:active { transform:scale(.96); }
+
+  /* ── HERO ЗАКАЗА ── */
+  .order-hero { background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%); color:#fff; border-radius:18px; padding:20px; margin-bottom:12px; }
+  .hero-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .hero-order-num { font-size:13px; color:#94a3b8; font-weight:600; }
+  .hero-created { font-size:11px; color:#475569; margin-top:2px; }
+  .hero-patient { font-size:26px; font-weight:800; margin-bottom:12px; letter-spacing:-.5px; line-height:1.2; }
+  .hero-meta { display:flex; justify-content:space-between; align-items:center; }
+  .hero-appt { font-size:12px; color:#94a3b8; }
+  .hero-appt strong { color:#e2e8f0; }
+
+  /* ── QUICK BAR ── */
+  .quick-bar { display:grid; grid-template-columns:1fr 1fr 1fr; background:#fff; border-radius:14px; padding:14px 8px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); text-align:center; }
+  .qb-item { padding:0 6px; }
+  .qb-item+.qb-item { border-left:1px solid #f1f5f9; }
+  .qb-val { font-size:16px; font-weight:800; color:#1e293b; line-height:1.2; }
+  .qb-lbl { font-size:10px; color:#94a3b8; margin-top:3px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+
+  /* ── ИЗДЕЛИЯ ── */
+  .item-row { display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9; gap:8px; }
+  .item-row:last-child { border-bottom:none; }
+  .item-art { background:#f1f5f9; color:#64748b; font-size:10px; font-weight:700; padding:3px 7px; border-radius:6px; white-space:nowrap; flex-shrink:0; }
+  .item-name { flex:1; font-size:13px; font-weight:600; color:#1e293b; line-height:1.35; }
+  .item-qty-input { width:44px; border:1.5px solid #e2e8f0; border-radius:7px; padding:4px 6px; font-size:13px; font-weight:700; color:#1e293b; text-align:center; outline:none; }
+  .item-qty-input:focus { border-color:#2563eb; }
+  .item-total { font-size:13px; font-weight:700; color:#1e293b; white-space:nowrap; min-width:60px; text-align:right; }
+  .item-dot-ok { width:22px; height:22px; border-radius:50%; background:#dcfce7; color:#16a34a; font-size:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:700; cursor:pointer; transition:transform .1s; }
+  .item-dot-no { width:22px; height:22px; border-radius:50%; border:2px solid #e2e8f0; flex-shrink:0; cursor:pointer; transition:all .15s; }
+  .item-dot-no:hover { border-color:#22c55e; background:#f0fdf4; }
+  .item-del { width:24px; height:24px; border-radius:50%; background:#fee2e2; color:#dc2626; border:none; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; font-weight:700; line-height:1; }
+  .add-item-form { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .add-item-select { flex:1; min-width:0; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 10px; font-size:13px; font-family:inherit; outline:none; color:#1a1a1a; background:#fff; }
+  .add-item-select:focus { border-color:#2563eb; }
+  .add-item-qty { width:56px; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 8px; font-size:13px; font-weight:700; text-align:center; outline:none; }
+  .add-item-qty:focus { border-color:#2563eb; }
+  .add-item-btn { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .add-item-btn:active { opacity:.85; }
+  .items-add-toggle { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; padding:10px 0 2px; }
+  .items-total-row { display:flex; justify-content:space-between; align-items:center; padding-top:10px; margin-top:4px; border-top:2px solid #f1f5f9; }
+  .items-total-lbl { font-size:12px; color:#64748b; font-weight:600; }
+  .items-total-val { font-size:16px; font-weight:800; color:#1e293b; }
+
+  /* ── ЭТАПЫ (TIMELINE) ── */
+  .stages-list { margin-top:4px; }
+  .stage-item { display:flex; align-items:flex-start; gap:12px; position:relative; padding-bottom:18px; }
+  .stage-item:last-child { padding-bottom:0; }
+  .stage-item:not(:last-child)::after { content:''; position:absolute; left:15px; top:33px; bottom:0; width:2px; background:#e2e8f0; }
+  .stage-item.done::after { background:#22c55e; }
+  .stage-item.active::after { background:linear-gradient(#2563eb,#e2e8f0); }
+  .stage-dot { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0; z-index:1; }
+  .stage-item.done .stage-dot { background:#22c55e; color:#fff; }
+  .stage-item.active .stage-dot { background:#2563eb; color:#fff; box-shadow:0 0 0 5px rgba(37,99,235,.15); animation:stagePulse 2s infinite; }
+  .stage-item.pending .stage-dot { background:#f1f5f9; color:#94a3b8; border:2px solid #e2e8f0; }
+  @keyframes stagePulse { 0%,100%{box-shadow:0 0 0 4px rgba(37,99,235,.15)} 50%{box-shadow:0 0 0 8px rgba(37,99,235,.07)} }
+  .stage-body { flex:1; padding-top:4px; }
+  .stage-op { font-size:14px; font-weight:700; color:#1e293b; margin-bottom:3px; }
+  .stage-tech { font-size:12px; color:#2563eb; font-weight:600; margin-bottom:3px; }
+  .stage-dates { font-size:11px; color:#94a3b8; line-height:1.7; }
+  .stage-qty-tag { font-size:11px; color:#64748b; background:#f8fafc; padding:2px 8px; border-radius:6px; font-weight:600; margin-top:4px; display:inline-block; }
+  .stage-defect { color:#ef4444; font-size:11px; margin-top:4px; }
+
+  /* ── СКИДКА (инлайн-редактирование) ── */
+  .discount-wrap { display:flex; align-items:center; gap:6px; }
+  .discount-input { width:62px; border:1.5px solid #e2e8f0; border-radius:8px; padding:4px 8px; font-size:14px; font-weight:700; color:#1e293b; outline:none; text-align:center; transition:border .15s; }
+  .discount-input:focus { border-color:#2563eb; }
+  .discount-pct { font-size:14px; font-weight:700; color:#1e293b; }
+  .discount-save { background:#2563eb; color:#fff; border:none; border-radius:8px; padding:5px 11px; font-size:12px; font-weight:700; cursor:pointer; display:none; }
+  .discount-input:focus ~ .discount-save { display:inline-block; }
+  .discount-badge { background:#fef3c7; color:#d97706; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:4px; }
 
   /* ── СООБЩЕНИЯ ── */
   .msg-item { background:#f8fafc; border-radius:12px; padding:12px; margin-bottom:8px; }
@@ -105,7 +172,6 @@
   .msg-time { font-size:11px; color:#94a3b8; }
   .msg-text { font-size:13px; color:#334155; line-height:1.5; margin-bottom:6px; }
   .tg-badge { background:#29b6f6; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; font-weight:800; }
-  .msg-via { font-size:11px; color:#94a3b8; display:flex; align-items:center; gap:4px; }
   .comment-form { display:flex; gap:8px; margin-top:10px; }
   .comment-form input { flex:1; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; font-size:14px; outline:none; }
   .comment-form input:focus { border-color:#2563eb; }
@@ -122,10 +188,26 @@
   .kpi-card.accent .kpi-num, .kpi-card.accent .kpi-lbl { color:#fff; }
   .kpi-lbl { font-size:12px; color:#64748b; margin-top:2px; }
 
+  /* ── СОЗДАНИЕ ЗАКАЗА ── */
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; display:block; }
+  .form-input { width:100%; border:1.5px solid #e2e8f0; border-radius:10px; padding:11px 13px; font-size:15px; font-family:inherit; outline:none; color:#1a1a1a; background:#fff; transition:border .15s; }
+  .form-input:focus { border-color:#2563eb; }
+  select.form-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn-primary { width:100%; background:#2563eb; color:#fff; border:none; border-radius:12px; padding:15px; font-size:16px; font-weight:700; cursor:pointer; margin-top:8px; }
+  .btn-primary:active { opacity:.85; }
+  .btn-primary:disabled { background:#94a3b8; cursor:not-allowed; }
+  .form-section { background:#fff; border-radius:16px; padding:18px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .form-section-title { font-size:13px; font-weight:700; color:#1e293b; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid #f1f5f9; }
+
   /* ── СОСТОЯНИЯ ── */
   .empty { text-align:center; padding:40px 20px; color:#94a3b8; }
   .empty svg { width:48px; height:48px; margin-bottom:12px; opacity:.4; }
   .loading-text { text-align:center; padding:40px; color:#94a3b8; }
+  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; z-index:999; display:none; white-space:nowrap; }
+  .toast.show { display:block; animation:fadeInUp .2s ease; }
+  @keyframes fadeInUp { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 </style>
 </head>
 <body>
@@ -182,7 +264,7 @@
 
   <!-- ЭКРАН: ДЕТАЛИ ЗАКАЗА -->
   <div class="screen" id="screen-detail">
-    <button class="back-btn" onclick="showOrders()">← Мои заказы</button>
+    <button class="back-btn" onclick="showOrders()">← Назад</button>
     <div id="detail-content"></div>
   </div>
 
@@ -191,19 +273,118 @@
     <div id="messages-content"></div>
   </div>
 
+  <!-- ЭКРАН: СОЗДАТЬ ЗАКАЗ -->
+  <div class="screen" id="screen-create">
+    <div class="form-section">
+      <div class="form-section-title">Новый заказ</div>
+
+      <div class="form-group">
+        <label class="form-label">Пациент <span style="color:#ef4444">*</span></label>
+        <input class="form-input" id="f-patient" placeholder="Иванов И.И." autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Клиника <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Врач <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="f-doctor" placeholder="Соколов К.Д." autocomplete="off">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Вид работы <span style="color:#ef4444">*</span></label>
+        <input class="form-input" id="f-work" list="work-types" placeholder="Металлокерамика" autocomplete="off">
+        <datalist id="work-types">
+          <option value="Металлокерамика">
+          <option value="Циркониевая коронка">
+          <option value="Имплант-коронка циркониевая">
+          <option value="Съёмный протез">
+          <option value="Акриловая коронка">
+          <option value="Виниры">
+          <option value="Бюгельный протез">
+          <option value="Временные коронки">
+        </datalist>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Единиц</label>
+          <input class="form-input" id="f-units" type="number" min="1" max="32" value="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Зубы <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="f-teeth" placeholder="14, 15, 16" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Описание / цвет</label>
+        <input class="form-input" id="f-desc" placeholder="Цвет A2, особые пожелания..." autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Техник <span style="color:#ef4444">*</span></label>
+        <select class="form-input" id="f-tech">
+          <option value="">Загрузка...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Приоритет</label>
+        <select class="form-input" id="f-priority">
+          <option value="высокий">Высокий</option>
+          <option value="средний" selected>Средний</option>
+          <option value="низкий">Низкий</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Сумма (₽)</label>
+          <input class="form-input" id="f-total" type="number" min="0" step="100" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Скидка (%)</label>
+          <input class="form-input" id="f-discount" type="number" min="0" max="100" step="1" placeholder="0" value="0">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Сдать до <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="f-deadline" type="datetime-local">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Приём пациента</label>
+          <input class="form-input" id="f-appt" type="datetime-local">
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-create" onclick="submitOrder()">Создать заказ</button>
+    </div>
+  </div>
+
   <!-- ЭКРАН: ДАШБОРД -->
   <div class="screen" id="screen-dashboard">
     <div id="dashboard-content"><div class="loading-text">Загрузка...</div></div>
   </div>
 
-  <div class="bottom-nav">
+  <div class="bottom-nav" id="bottom-nav">
     <button class="bnav-btn active" id="bnav-orders" onclick="showOrders()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Мои заказы
+      Заказы
     </button>
     <button class="bnav-btn" id="bnav-msgs" onclick="showMessages()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
       Сообщения
+    </button>
+    <button class="bnav-btn add-btn" id="bnav-create" onclick="showCreate()" style="display:none">
+      <div class="add-circle">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </div>
+      Заказ
     </button>
     <button class="bnav-btn" id="bnav-dash" onclick="showDashboard()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
@@ -212,14 +393,21 @@
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-const API = 'http://5.42.119.226:8000';
+const API = '';
 let pin = '';
 let currentUser = null;
 let orders = [];
 let currentOrderId = null;
+let techniciansList = [];
+let nomenclature = [];
+let filterTech = '';
+let filterClinic = '';
+let filterStatus = '';
 
-// ── УТИЛИТЫ ──
+// ── УТИЛИТЫ ──────────────────────────────────────────────────────────────────
 function fmt(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -233,6 +421,16 @@ function fmt(iso) {
   if (diff < 1) return `Сегодня ${hh}:${min}`;
   if (diff < 2) return `Завтра ${hh}:${min}`;
   return `${dd}.${mm} ${hh}:${min}`;
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear()}`;
+}
+function fmtShort(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
 }
 function urgency(deadline) {
   const diff = (new Date(deadline) - new Date()) / 86400000;
@@ -248,8 +446,22 @@ function statusBadge(s) {
   const cls = {новый:'gray',в_работе:'blue',готово:'green',сдано:'green',на_проверке:'yellow'}[s]||'gray';
   return `<span class="badge ${cls}">${statusLabel(s)}</span>`;
 }
+function showToast(msg, ms=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+function setNav(active) {
+  ['bnav-orders','bnav-msgs','bnav-create','bnav-dash'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const el = document.getElementById(active);
+  if (el) el.classList.add('active');
+}
 
-// ── PIN ──
+// ── PIN ───────────────────────────────────────────────────────────────────────
 function pinKey(k) {
   if (!k || pin.length >= 4) return;
   pin += k;
@@ -285,16 +497,30 @@ function logout() {
   updateDots();
 }
 
-// ── ЗАПУСК ──
+// ── ЗАПУСК ────────────────────────────────────────────────────────────────────
 function startApp() {
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('top-name').textContent = currentUser.name;
-  document.getElementById('top-sub').textContent = currentUser.city;
-  loadOrders();
+  document.getElementById('top-sub').textContent = currentUser.city || '';
+  loadNomenclature();
+  if (currentUser.role === 'admin') {
+    document.getElementById('bnav-create').style.display = 'flex';
+    loadTechniciansForForm().then(() => loadOrders());
+  } else {
+    loadOrders();
+  }
 }
 
-// ── ЗАКАЗЫ ──
+async function loadNomenclature() {
+  try {
+    const r = await fetch(`${API}/nomenclature`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    nomenclature = data.items;
+  } catch { /* silent */ }
+}
+
+// ── ЗАКАЗЫ ────────────────────────────────────────────────────────────────────
 async function loadOrders() {
   try {
     const r = await fetch(`${API}/orders`, {headers:{'x-pin': localStorage.getItem('pin')}});
@@ -305,11 +531,103 @@ async function loadOrders() {
 }
 
 function renderOrders() {
-  const red = orders.filter(o => urgency(o.deadline) === 'red');
-  const yellow = orders.filter(o => urgency(o.deadline) === 'yellow');
-  const green = orders.filter(o => urgency(o.deadline) === 'green');
+  if (currentUser.role === 'admin') {
+    renderAdminTable();
+  } else {
+    renderTechCards();
+  }
+}
 
-  // Шапка
+function applyFilters() {
+  filterTech   = document.getElementById('fil-tech')?.value   || '';
+  filterClinic = document.getElementById('fil-clinic')?.value || '';
+  filterStatus = document.getElementById('fil-status')?.value || '';
+  renderAdminTable();
+}
+
+function renderAdminTable() {
+  let filtered = orders;
+  if (filterTech)   filtered = filtered.filter(o => o.technician_id === filterTech);
+  if (filterClinic) filtered = filtered.filter(o => o.clinic_name   === filterClinic);
+  if (filterStatus) filtered = filtered.filter(o => o.status        === filterStatus);
+
+  const clinics = [...new Set(orders.map(o => o.clinic_name))].sort();
+
+  const techOptions = techniciansList.map(t =>
+    `<option value="${t.id}" ${filterTech === t.id ? 'selected' : ''}>${t.name}</option>`).join('');
+  const clinicOptions = clinics.map(c =>
+    `<option value="${c}" ${filterClinic === c ? 'selected' : ''}>${c}</option>`).join('');
+  const statusOpts = ['новый','в_работе','готово','сдано'].map(s =>
+    `<option value="${s}" ${filterStatus === s ? 'selected' : ''}>${statusLabel(s)}</option>`).join('');
+
+  const sel = `border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;color:#1a1a1a;background:#fff;flex:1;min-width:110px`;
+
+  const summary = `
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+    ${[['Всего',orders.length,'#1e293b'],
+       ['В работе',orders.filter(o=>o.status==='в_работе').length,'#2563eb'],
+       ['Срочных',orders.filter(o=>urgency(o.deadline)==='red').length,'#dc2626'],
+       ['Готово',orders.filter(o=>['готово','сдано'].includes(o.status)).length,'#16a34a']
+      ].map(([l,n,c])=>`
+    <div style="background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);text-align:center">
+      <div style="font-size:24px;font-weight:800;color:${c}">${n}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">${l}</div>
+    </div>`).join('')}
+  </div>`;
+
+  const filters = `
+  <div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;gap:8px;flex-wrap:wrap">
+    <select onchange="applyFilters()" id="fil-tech" style="${sel}">
+      <option value="">Все техники</option>${techOptions}
+    </select>
+    <select onchange="applyFilters()" id="fil-clinic" style="${sel}">
+      <option value="">Все клиники</option>${clinicOptions}
+    </select>
+    <select onchange="applyFilters()" id="fil-status" style="${sel}">
+      <option value="">Все статусы</option>${statusOpts}
+    </select>
+  </div>`;
+
+  const th = `padding:9px 8px;font-size:11px;font-weight:700;color:#64748b;text-align:left;white-space:nowrap;border-bottom:2px solid #e2e8f0`;
+  const cols = ['Номер','Дата','Клиника','Пациент','Работа','Техник','Статус','Сдать до'];
+  const thead = `<tr style="background:#f8fafc">${cols.map(c=>`<th style="${th}">${c}</th>`).join('')}</tr>`;
+
+  const rows = filtered.map(o => {
+    const u = urgency(o.deadline);
+    const dot = u==='red'?'#ef4444':u==='yellow'?'#f59e0b':'#22c55e';
+    const dateStr = o.created_at ? o.created_at.slice(0,10).split('-').reverse().join('.') : '—';
+    const td = `padding:10px 8px;font-size:13px;border-bottom:1px solid #f1f5f9`;
+    return `<tr onclick="showDetail('${o.id}')" style="cursor:pointer;transition:background .1s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <td style="${td};font-weight:700;color:#2563eb;white-space:nowrap">${o.id}</td>
+      <td style="${td};color:#64748b;white-space:nowrap">${dateStr}</td>
+      <td style="${td};white-space:nowrap">${o.clinic_name}</td>
+      <td style="${td};font-weight:600;white-space:nowrap">${o.patient_name}</td>
+      <td style="${td};color:#475569;max-width:140px">${o.work_type}</td>
+      <td style="${td};white-space:nowrap">${o.technician_name||'—'}</td>
+      <td style="${td}">${statusBadge(o.status)}</td>
+      <td style="${td};white-space:nowrap"><span style="color:${dot};font-weight:700">${fmt(o.deadline)}</span></td>
+    </tr>`;
+  }).join('');
+
+  const table = `
+  <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>${thead}</thead>
+        <tbody>${rows || `<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">Нет заказов</td></tr>`}</tbody>
+      </table>
+    </div>
+    <div style="padding:10px 14px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9">Показано: ${filtered.length} из ${orders.length}</div>
+  </div>`;
+
+  document.getElementById('orders-content').innerHTML = summary + filters + table;
+}
+
+function renderTechCards() {
+  const red    = orders.filter(o => urgency(o.deadline) === 'red');
+  const yellow = orders.filter(o => urgency(o.deadline) === 'yellow');
+  const green  = orders.filter(o => urgency(o.deadline) === 'green');
+
   const headerHTML = `
   <div class="tech-header">
     <div class="hi">Добрый день,</div>
@@ -322,10 +640,9 @@ function renderOrders() {
   </div>`;
 
   let html = headerHTML;
-
-  if (red.length) { html += `<div class="section-title">🔴 Срочно</div>`; red.forEach(o => html += cardHTML(o)); }
-  if (yellow.length) { html += `<div class="section-title">🟡 Завтра</div>`; yellow.forEach(o => html += cardHTML(o)); }
-  if (green.length) { html += `<div class="section-title">🟢 Впереди</div>`; green.forEach(o => html += cardHTML(o)); }
+  if (red.length)    { html += `<div class="section-title">Срочно</div>`;  red.forEach(o => html += cardHTML(o)); }
+  if (yellow.length) { html += `<div class="section-title">Завтра</div>`;  yellow.forEach(o => html += cardHTML(o)); }
+  if (green.length)  { html += `<div class="section-title">Впереди</div>`; green.forEach(o => html += cardHTML(o)); }
   if (!orders.length) html += `<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg><div>Нет активных заказов</div></div>`;
 
   document.getElementById('orders-content').innerHTML = html;
@@ -333,18 +650,16 @@ function renderOrders() {
 
 function cardHTML(o) {
   const u = urgency(o.deadline);
-  const dl = fmt(o.deadline);
   const hasMsgs = o.messages && o.messages.length > 0;
-  const badgeColor = u === 'red' ? 'red' : u === 'yellow' ? 'yellow' : 'green';
   return `
   <div class="order-card ${u}" onclick="showDetail('${o.id}')">
     <div class="card-r1">
       <div class="card-patient">${o.patient_name}</div>
-      <span class="badge ${badgeColor}">${dl}</span>
+      <span class="badge ${u === 'red' ? 'red' : u === 'yellow' ? 'yellow' : 'green'}">${fmt(o.deadline)}</span>
     </div>
     <div class="card-work-line">
       <strong>${o.work_type}</strong> ${o.units} ед. (зубы ${o.teeth})
-      ${hasMsgs ? `<span class="card-msg-tag">📎 фото от врача</span>` : ''}
+      ${hasMsgs ? `<span class="card-msg-tag">фото от врача</span>` : ''}
     </div>
     <div class="card-bottom">
       <div class="card-appt">Приём: <strong>${fmt(o.appointment_at)}</strong></div>
@@ -353,71 +668,274 @@ function cardHTML(o) {
   </div>`;
 }
 
-// ── ДЕТАЛИ ──
+// ── ДЕТАЛИ ────────────────────────────────────────────────────────────────────
 function showDetail(id) {
   currentOrderId = id;
   const o = orders.find(x => x.id === id);
   if (!o) return;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-detail').classList.add('active');
-  document.getElementById('bnav-orders').classList.remove('active');
+  setNav('');
+  document.getElementById('detail-content').innerHTML = renderDetail(o);
+}
 
-  const statuses = ['новый','в_работе','готово','сдано'];
-  const statusBtns = statuses.map(s =>
-    `<button class="status-btn ${o.status === s ? 'active' : ''}" onclick="changeStatus('${id}','${s}')">${statusLabel(s)}</button>`
+function renderDetail(o) {
+  const u = urgency(o.deadline);
+
+  // ── HERO ──
+  const heroSection = `
+  <div class="order-hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-order-num">Заказ ${o.id}</div>
+        <div class="hero-created">${fmtDate(o.created_at)}</div>
+      </div>
+      ${statusBadge(o.status)}
+    </div>
+    <div class="hero-patient">${o.patient_name}</div>
+    <div class="hero-meta">
+      <span class="hero-appt">Приём: <strong>${fmt(o.appointment_at)}</strong></span>
+      ${u === 'red' ? `<span class="badge red" style="font-size:11px">⚠ Срочно</span>` : u === 'yellow' ? `<span class="badge yellow" style="font-size:11px">⏰ Завтра</span>` : `<span class="badge green" style="font-size:11px">✓ В срок</span>`}
+    </div>
+  </div>`;
+
+  // ── QUICK BAR ──
+  const colorMatch = o.description && o.description.match(/\b[A-D]\d\b/);
+  const quickBar = `
+  <div class="quick-bar">
+    <div class="qb-item">
+      <div class="qb-val">${o.tooth_color || (colorMatch ? colorMatch[0] : '—')}</div>
+      <div class="qb-lbl">Цвет</div>
+    </div>
+    <div class="qb-item">
+      <div class="qb-val" style="font-size:13px">${o.preferred_technician || o.technician_name || '—'}</div>
+      <div class="qb-lbl">Техник</div>
+    </div>
+    <div class="qb-item">
+      <div class="qb-val" style="font-size:${o.total ? '13px' : '18px'}">${o.total ? Number(o.total).toLocaleString('ru') + ' ₽' : o.units + ' ед.'}</div>
+      <div class="qb-lbl">${o.total ? 'Сумма' : 'Единиц'}</div>
+    </div>
+  </div>`;
+
+  // ── КЛИНИКА ──
+  const disc = o.discount || 0;
+  const discountedTotal = o.total && disc > 0 ? o.total * (1 - disc / 100) : o.total;
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const clinicSection = `
+  <div class="detail-card">
+    <h3>Клиника и врач</h3>
+    <div class="detail-row"><span class="dl">🏥 Клиника</span><span class="dv">${o.clinic_name}</span></div>
+    <div class="detail-row"><span class="dl">👨‍⚕️ Врач</span><span class="dv">${o.doctor_name}</span></div>
+    <div class="detail-row"><span class="dl">📅 Сдать до</span><span class="dv ${u === 'red' ? 'red' : ''}">${fmt(o.deadline)}</span></div>
+    ${o.total ? `<div class="detail-row">
+      <span class="dl">💰 Сумма</span>
+      <span class="dv">
+        ${disc > 0 ? `<span style="text-decoration:line-through;color:#94a3b8;font-size:12px;margin-right:4px">${Number(o.total).toLocaleString('ru')} ₽</span>${Number(discountedTotal).toLocaleString('ru')} ₽` : `${Number(o.total).toLocaleString('ru')} ₽`}
+      </span>
+    </div>` : ''}
+    <div class="detail-row">
+      <span class="dl">🏷 Скидка</span>
+      <div class="discount-wrap">
+        ${isAdmin ? `
+        <input class="discount-input" id="disc-${o.id}" type="number" min="0" max="100" step="1"
+               value="${disc}" onkeydown="if(event.key==='Enter')saveDiscount('${o.id}')"
+               onblur="saveDiscount('${o.id}')">
+        <span class="discount-pct">%</span>
+        ${disc > 0 ? `<span class="discount-badge">−${disc}%</span>` : `<span style="font-size:12px;color:#94a3b8">Не предоставляется</span>`}
+        ` : `<span class="dv">${disc > 0 ? disc + '%' : 'Не предоставляется'}</span>`}
+      </div>
+    </div>
+    ${o.payment_status ? `<div class="detail-row"><span class="dl">💳 Оплата</span><span class="dv">${o.payment_status}</span></div>` : ''}
+    ${o.description ? `<div class="detail-row"><span class="dl">📝 Примечание</span><span class="dv" style="font-size:12px;color:#475569">${o.description}</span></div>` : ''}
+  </div>`;
+
+  // ── ИЗДЕЛИЯ ──
+  const nomOpts = nomenclature.map(n =>
+    `<option value="${n.id}">${n.article} — ${n.name} (${Number(n.price).toLocaleString('ru')} ₽)</option>`
   ).join('');
+  const items = o.items || [];
+  const itemsTotal = items.reduce((s, it) => s + (it.total || 0), 0);
+  const itemRows = items.map(item => `
+  <div class="item-row" id="irow-${item.id}">
+    <span class="item-art">${item.article || '—'}</span>
+    <span class="item-name">${item.name}</span>
+    <input class="item-qty-input" type="number" min="1" max="99" value="${item.qty}"
+           onchange="updateItemQty('${o.id}',${item.id},this.value)"
+           ${isAdmin ? '' : 'readonly style="border:none;background:none;pointer-events:none"'}>
+    <span class="item-total">${item.total ? Number(item.total).toLocaleString('ru') + ' ₽' : '—'}</span>
+    <div class="${item.is_delivered ? 'item-dot-ok' : 'item-dot-no'}"
+         onclick="toggleDelivered('${o.id}',${item.id})" title="${item.is_delivered ? 'Сдано' : 'Отметить как сдано'}">
+      ${item.is_delivered ? '✓' : ''}
+    </div>
+    ${isAdmin ? `<button class="item-del" onclick="deleteItem('${o.id}',${item.id})" title="Удалить">×</button>` : ''}
+  </div>`).join('');
 
+  const addForm = isAdmin ? `
+  <div id="add-item-wrap-${o.id}" style="display:none">
+    <div class="add-item-form">
+      <select class="add-item-select" id="nom-sel-${o.id}">
+        <option value="">— Выберите изделие —</option>
+        ${nomOpts}
+      </select>
+      <input class="add-item-qty" id="nom-qty-${o.id}" type="number" min="1" max="99" value="1">
+      <button class="add-item-btn" onclick="addItem('${o.id}')">Добавить</button>
+    </div>
+  </div>
+  <button class="items-add-toggle" onclick="toggleAddForm('${o.id}')">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    Добавить изделие
+  </button>` : '';
+
+  const itemsSection = `
+  <div class="detail-card">
+    <h3>Заказанные изделия</h3>
+    ${itemRows || `<div style="color:#94a3b8;font-size:13px;padding:8px 0">${o.work_type} · ${o.units} ед.${o.teeth ? ' · зубы ' + o.teeth : ''}</div>`}
+    ${items.length > 1 ? `<div class="items-total-row"><span class="items-total-lbl">Итого изделий</span><span class="items-total-val">${Number(itemsTotal).toLocaleString('ru')} ₽</span></div>` : ''}
+    ${addForm}
+  </div>`;
+
+  // ── ЭТАПЫ ──
+  let stagesSection = '';
+  if (o.stages && o.stages.length) {
+    const items = o.stages.map(s => {
+      let cls = 'pending', dot = s.n;
+      if (s.actual_date) { cls = 'done'; dot = '✓'; }
+      else if (s.transferred_at || s.accepted_at) { cls = 'active'; }
+      const dates = s.transferred_at
+        ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date ? `<br>Выполнено: ${fmtShort(s.actual_date)}` : '<br><em>Выполняется...</em>'}`
+        : '<em style="color:#cbd5e1">Ожидает очереди</em>';
+      return `
+      <div class="stage-item ${cls}">
+        <div class="stage-dot">${dot}</div>
+        <div class="stage-body">
+          <div class="stage-op">${s.operation}</div>
+          <div class="stage-tech">👤 ${s.technician}</div>
+          <div class="stage-dates">${dates}</div>
+          <span class="stage-qty-tag">× ${s.qty} ед.</span>
+          ${s.defect_comment ? `<div class="stage-defect">⚠ ${s.defect_comment}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    stagesSection = `<div class="detail-card"><h3>Этапы производства</h3><div class="stages-list">${items}</div></div>`;
+  }
+
+  // ── СТАТУС ──
+  const statuses = ['новый','в_работе','на_проверке','готово','сдано'];
+  const statusBtns = statuses.map(s =>
+    `<button class="status-btn ${o.status === s ? 'active' : ''}" onclick="changeStatus('${o.id}','${s}')">${statusLabel(s)}</button>`
+  ).join('');
+  const statusSection = `<div class="detail-card"><h3>Статус работы</h3><div class="status-row">${statusBtns}</div></div>`;
+
+  // ── СООБЩЕНИЯ ──
   const msgs = (o.messages||[]).map(m => `
     <div class="msg-item">
-      <div class="msg-meta"><span class="msg-from">${m.from}</span><span class="msg-time">${m.time.slice(11,16)}</span></div>
+      <div class="msg-meta"><span class="msg-from">${m.from}</span><span class="msg-time">${m.time ? m.time.slice(11,16) : ''}</span></div>
       <div class="msg-text">${m.text}</div>
-      ${m.has_photo ? `<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin-bottom:6px">📷 Фото от врача</div>` : ''}
-      <div class="msg-via"><span class="tg-badge">TG</span> Из Telegram → переслано автоматически</div>
+      ${m.has_photo ? `<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:110px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin:8px 0">📷 Фото от врача</div>` : ''}
+      <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:4px;margin-top:6px"><span style="background:#29b6f6;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800">TG</span> Из Telegram</div>
     </div>`).join('');
 
   const comments = (o.comments||[]).map(c => `
     <div class="msg-item">
-      <div class="msg-meta"><span class="msg-from">${c.author}</span><span class="msg-time">${c.created_at.slice(11,16)}</span></div>
+      <div class="msg-meta"><span class="msg-from">${c.author}</span><span class="msg-time">${c.created_at ? c.created_at.slice(11,16) : ''}</span></div>
       <div class="msg-text">${c.text}</div>
     </div>`).join('');
 
-  document.getElementById('detail-content').innerHTML = `
-    <div class="detail-card">
-      <h3>Заказ · ${o.patient_name}</h3>
-      <div class="key-fields">
-        <div class="kf-item"><div class="kf-lbl">Работа</div><div class="kf-val" style="font-size:12px">${o.work_type}</div></div>
-        <div class="kf-item"><div class="kf-lbl">Единиц</div><div class="kf-val">${o.units}</div></div>
-        <div class="kf-item"><div class="kf-lbl">Зубы</div><div class="kf-val" style="font-size:13px">${o.teeth}</div></div>
-      </div>
-      <div class="detail-row"><span class="dl">Клиника</span><span class="dv">${o.clinic_name}</span></div>
-      <div class="detail-row"><span class="dl">Врач</span><span class="dv">${o.doctor_name}</span></div>
-      <div class="detail-row"><span class="dl">Сдать до</span><span class="dv red">${fmt(o.deadline)}</span></div>
-      <div class="detail-row"><span class="dl">Приём пациента</span><span class="dv">${fmt(o.appointment_at)}</span></div>
-      <div class="detail-row"><span class="dl">Описание</span><span class="dv">${o.description}</span></div>
+  const chatSection = `
+  <div class="detail-card">
+    <h3>${msgs ? '📨 Сообщения от врача' : '💬 Комментарии'}</h3>
+    ${msgs}${comments}
+    <div class="comment-form">
+      <input type="text" id="comment-input" placeholder="Написать комментарий...">
+      <button onclick="addComment()">→</button>
     </div>
-    <div class="detail-card">
-      <h3>Статус работы</h3>
-      <div class="status-row">${statusBtns}</div>
-    </div>
-    ${msgs || comments ? `
-    <div class="detail-card">
-      <h3>📨 Сообщения от врача</h3>
-      ${msgs}
-      ${comments}
-      <div class="comment-form">
-        <input type="text" id="comment-input" placeholder="Написать комментарий...">
-        <button onclick="addComment()">→</button>
-      </div>
-    </div>` : `
-    <div class="detail-card">
-      <h3>💬 Комментарии</h3>
-      ${comments}
-      <div class="comment-form">
-        <input type="text" id="comment-input" placeholder="Написать комментарий...">
-        <button onclick="addComment()">→</button>
-      </div>
-    </div>`}
-  `;
+  </div>`;
+
+  return heroSection + quickBar + clinicSection + itemsSection + stagesSection + statusSection + chatSection;
+}
+
+async function toggleAddForm(orderId) {
+  const wrap = document.getElementById(`add-item-wrap-${orderId}`);
+  if (!wrap) return;
+  const opening = wrap.style.display === 'none';
+  wrap.style.display = opening ? 'block' : 'none';
+  if (!opening) return;
+
+  // Если номенклатура ещё не загружена — грузим сейчас
+  if (!nomenclature.length) await loadNomenclature();
+
+  const sel = document.getElementById(`nom-sel-${orderId}`);
+  if (sel) {
+    sel.innerHTML = '<option value="">— Выберите изделие —</option>' +
+      nomenclature.map(n =>
+        `<option value="${n.id}">${n.article} — ${n.name} (${Number(n.price).toLocaleString('ru')} ₽)</option>`
+      ).join('');
+  }
+}
+
+async function addItem(orderId) {
+  const sel = document.getElementById(`nom-sel-${orderId}`);
+  const qtyEl = document.getElementById(`nom-qty-${orderId}`);
+  const nomId = parseInt(sel?.value);
+  const qty = parseInt(qtyEl?.value) || 1;
+  if (!nomId) { showToast('Выберите изделие из списка', 2000); return; }
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/items`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({nomenclature_id: nomId, qty})
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showToast('Изделие добавлено');
+    showDetail(orderId);
+  } catch { showToast('Ошибка при добавлении'); }
+}
+
+async function deleteItem(orderId, itemId) {
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/items/${itemId}`, {
+      method:'DELETE', headers:{'x-pin':localStorage.getItem('pin')}
+    });
+    const data = await r.json();
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showToast('Изделие удалено');
+    showDetail(orderId);
+  } catch { showToast('Ошибка при удалении'); }
+}
+
+async function updateItemQty(orderId, itemId, qty) {
+  const q = parseInt(qty);
+  if (!q || q < 1) return;
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/items/${itemId}/qty`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({qty: q})
+    });
+    const data = await r.json();
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showDetail(orderId);
+  } catch { /* silent */ }
+}
+
+async function toggleDelivered(orderId, itemId) {
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/items/${itemId}/delivered`, {
+      method:'PATCH', headers:{'x-pin':localStorage.getItem('pin')}
+    });
+    const data = await r.json();
+    const o = orders.find(x => x.id === orderId);
+    if (o) {
+      const it = o.items?.find(i => i.id === itemId);
+      if (it) it.is_delivered = data.is_delivered;
+    }
+    showDetail(orderId);
+  } catch { /* silent */ }
 }
 
 async function changeStatus(id, status) {
@@ -430,7 +948,28 @@ async function changeStatus(id, status) {
     const o = orders.find(x => x.id === id);
     if (o) o.status = status;
     showDetail(id);
+    showToast(`Статус: ${statusLabel(status)}`);
   } catch { alert('Ошибка при смене статуса'); }
+}
+
+async function saveDiscount(id) {
+  const input = document.getElementById(`disc-${id}`);
+  if (!input) return;
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0 || val > 100) {
+    showToast('Скидка: от 0 до 100%', 2000); return;
+  }
+  try {
+    await fetch(`${API}/orders/${id}/discount`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({discount: val})
+    });
+    const o = orders.find(x => x.id === id);
+    if (o) o.discount = val;
+    showToast(val > 0 ? `Скидка ${val}% сохранена` : 'Скидка убрана');
+    showDetail(id);
+  } catch { showToast('Ошибка при сохранении скидки'); }
 }
 
 async function addComment() {
@@ -451,28 +990,23 @@ async function addComment() {
   } catch { alert('Ошибка при добавлении комментария'); }
 }
 
+// ── НАВИГАЦИЯ ЭКРАНОВ ─────────────────────────────────────────────────────────
 function showOrders() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-orders').classList.add('active');
-  ['bnav-orders','bnav-msgs','bnav-dash'].forEach(id => document.getElementById(id).classList.remove('active'));
-  document.getElementById('bnav-orders').classList.add('active');
+  setNav('bnav-orders');
 }
-
 function showMessages() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-messages').classList.add('active');
-  ['bnav-orders','bnav-msgs','bnav-dash'].forEach(id => document.getElementById(id).classList.remove('active'));
-  document.getElementById('bnav-msgs').classList.add('active');
-
+  setNav('bnav-msgs');
   const allMsgs = orders.flatMap(o =>
     (o.messages||[]).map(m => ({...m, patient: o.patient_name, order_id: o.id, work: o.work_type}))
   );
-
   if (!allMsgs.length) {
     document.getElementById('messages-content').innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg><div>Нет сообщений от врачей</div></div>`;
     return;
   }
-
   const html = allMsgs.map(m => `
     <div class="detail-card" onclick="showDetail('${m.order_id}')" style="cursor:pointer;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;margin-bottom:8px">
@@ -481,24 +1015,106 @@ function showMessages() {
       </div>
       <div style="font-size:12px;color:#64748b;margin-bottom:6px">По пациенту: <strong>${m.patient}</strong> · ${m.work}</div>
       <div style="font-size:13px;color:#334155;line-height:1.5">${m.text}</div>
-      ${m.has_photo ? `<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:100px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin-top:8px">📷 Фото от врача</div>` : ''}
-      <div style="font-size:11px;color:#94a3b8;margin-top:8px;display:flex;align-items:center;gap:4px"><span style="background:#29b6f6;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800">TG</span> Из Telegram → переслано автоматически</div>
+      ${m.has_photo ? `<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:80px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin-top:8px">Фото от врача</div>` : ''}
     </div>`).join('');
-
-  document.getElementById('messages-content').innerHTML = `<div class="section-title">📨 Сообщения от врачей</div>${html}`;
+  document.getElementById('messages-content').innerHTML = `<div class="section-title">Сообщения от врачей</div>${html}`;
 }
 
-// ── ДАШБОРД ──
+// ── СОЗДАНИЕ ЗАКАЗА (только для admin) ────────────────────────────────────────
+async function loadTechniciansForForm() {
+  try {
+    const r = await fetch(`${API}/technicians`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    techniciansList = data.technicians;
+    const sel = document.getElementById('f-tech');
+    if (sel) sel.innerHTML = techniciansList.map(t =>
+      `<option value="${t.id}">${t.name}</option>`
+    ).join('');
+  } catch { /* silent */ }
+}
+
+function showCreate() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-create').classList.add('active');
+  setNav('bnav-create');
+  document.getElementById('btn-create').disabled = false;
+  document.getElementById('btn-create').textContent = 'Создать заказ';
+}
+
+async function submitOrder() {
+  const get = id => document.getElementById(id).value.trim();
+  const patient  = get('f-patient');
+  const clinic   = get('f-clinic');
+  const doctor   = get('f-doctor');
+  const work     = get('f-work');
+  const units    = parseInt(document.getElementById('f-units').value) || 1;
+  const teeth    = get('f-teeth');
+  const desc     = get('f-desc');
+  const techId   = get('f-tech');
+  const priority = get('f-priority');
+  const deadline = get('f-deadline');
+  const appt     = get('f-appt');
+  const total    = parseFloat(document.getElementById('f-total').value) || 0;
+  const discount = parseFloat(document.getElementById('f-discount').value) || 0;
+
+  const required = [
+    [patient,  'Пациент'],
+    [clinic,   'Клиника'],
+    [doctor,   'Врач'],
+    [work,     'Вид работы'],
+    [teeth,    'Зубы'],
+    [techId,   'Техник'],
+    [deadline, 'Сдать до'],
+  ];
+  const missing = required.filter(([v]) => !v).map(([,n]) => n);
+  if (missing.length) {
+    showToast('Не заполнено: ' + missing.join(', '), 3000);
+    return;
+  }
+
+  const btn = document.getElementById('btn-create');
+  btn.disabled = true;
+  btn.textContent = 'Сохранение...';
+
+  try {
+    const r = await fetch(`${API}/orders`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-pin': localStorage.getItem('pin')},
+      body: JSON.stringify({
+        patient_name: patient, clinic_name: clinic, doctor_name: doctor,
+        work_type: work, units, teeth, description: desc,
+        technician_id: techId, priority, total, discount,
+        deadline: deadline.replace('T',' ') + ':00',
+        appointment_at: appt ? appt.replace('T',' ') + ':00' : null
+      })
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    orders.unshift(data.order);
+    // Reset form
+    ['f-patient','f-clinic','f-doctor','f-work','f-teeth','f-desc','f-deadline','f-appt']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('f-units').value = 1;
+    showToast(`Заказ создан: ${data.order.id}`);
+    showOrders();
+    renderOrders();
+  } catch {
+    showToast('Ошибка при создании заказа');
+    btn.disabled = false;
+    btn.textContent = 'Создать заказ';
+  }
+}
+
+// ── ДАШБОРД ───────────────────────────────────────────────────────────────────
 async function showDashboard() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-dashboard').classList.add('active');
-  ['bnav-orders','bnav-msgs','bnav-dash'].forEach(id => document.getElementById(id).classList.remove('active'));
-  document.getElementById('bnav-dash').classList.add('active');
+  setNav('bnav-dash');
   try {
     const r = await fetch(`${API}/metrics`, {headers:{'x-pin':localStorage.getItem('pin')}});
     const m = await r.json();
     document.getElementById('dashboard-content').innerHTML = `
-      <div class="dash-header"><h2>Лаборатория Москва</h2><p>Статистика по заказам</p></div>
+      <div class="dash-header"><h2>Лаборатория ArtSmile</h2><p>Статистика по заказам</p></div>
       <div class="kpi-grid">
         <div class="kpi-card accent"><div class="kpi-num">${m.total_orders}</div><div class="kpi-lbl">Всего заказов</div></div>
         <div class="kpi-card"><div class="kpi-num" style="color:#dc2626">${m.overdue}</div><div class="kpi-lbl">Просрочено</div></div>
@@ -508,10 +1124,10 @@ async function showDashboard() {
   } catch { document.getElementById('dashboard-content').innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
 }
 
-// ── ИНИЦИАЛИЗАЦИЯ ──
+// ── ИНИЦИАЛИЗАЦИЯ ─────────────────────────────────────────────────────────────
 window.onload = () => {
   setTimeout(() => {
-    const savedPin = localStorage.getItem('pin');
+    const savedPin  = localStorage.getItem('pin');
     const savedUser = localStorage.getItem('user');
     document.getElementById('screen-loading').style.display = 'none';
     if (savedPin && savedUser) {
@@ -521,7 +1137,7 @@ window.onload = () => {
     } else {
       document.getElementById('screen-login').style.display = 'flex';
     }
-  }, 1000);
+  }, 800);
 };
 </script>
 </body>
