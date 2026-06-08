@@ -239,7 +239,7 @@ def _fetch_order(conn, order_id):
     for it in items:
         it["is_delivered"] = bool(it["is_delivered"])
     stages = [dict(r) for r in conn.execute(
-        "SELECT n,article,operation,qty,technician,transferred_at,accepted_at,planned_date,actual_date,defect_comment,amount "
+        "SELECT id,n,article,operation,qty,technician,transferred_at,accepted_at,planned_date,actual_date,defect_comment,amount "
         "FROM order_stages WHERE order_id=? ORDER BY n",
         (order_id,)).fetchall()]
     d = dict(row)
@@ -286,6 +286,13 @@ class OrderItemAdd(BaseModel):
 
 class OrderItemQty(BaseModel):
     qty: int
+
+class StageAdd(BaseModel):
+    operation:    str
+    technician_id: str
+    qty:          int = 1
+    planned_date: Optional[str] = None
+    article:      str = ""
 
 class CommentAdd(BaseModel):
     text: str
@@ -449,6 +456,59 @@ def toggle_delivered(order_id: str, item_id: int, tech=Depends(get_tech), conn=D
     conn.execute("UPDATE order_items SET is_delivered=? WHERE id=?", (new_val, item_id))
     conn.commit()
     return {"success": True, "is_delivered": bool(new_val)}
+
+@app.post("/orders/{order_id}/stages")
+def add_stage(order_id: str, data: StageAdd, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if not conn.execute("SELECT id FROM orders WHERE id=?", (order_id,)).fetchone():
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    tech_row = conn.execute("SELECT name FROM technicians WHERE id=?", (data.technician_id,)).fetchone()
+    if not tech_row:
+        raise HTTPException(status_code=400, detail="Техник не найден")
+    max_n = conn.execute(
+        "SELECT COALESCE(MAX(n),0) FROM order_stages WHERE order_id=?", (order_id,)
+    ).fetchone()[0]
+    conn.execute(
+        "INSERT INTO order_stages (order_id,n,article,operation,qty,technician,planned_date) VALUES (?,?,?,?,?,?,?)",
+        (order_id, max_n + 1, data.article, data.operation, data.qty, tech_row["name"], data.planned_date)
+    )
+    conn.commit()
+    return {"success": True, "order": _fetch_order(conn, order_id)}
+
+@app.delete("/orders/{order_id}/stages/{stage_id}")
+def delete_stage(order_id: str, stage_id: int, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    conn.execute("DELETE FROM order_stages WHERE id=? AND order_id=?", (stage_id, order_id))
+    # Перенумерация
+    stages = conn.execute(
+        "SELECT id FROM order_stages WHERE order_id=? ORDER BY n", (order_id,)
+    ).fetchall()
+    for i, row in enumerate(stages, 1):
+        conn.execute("UPDATE order_stages SET n=? WHERE id=?", (i, row["id"]))
+    conn.commit()
+    return {"success": True, "order": _fetch_order(conn, order_id)}
+
+@app.patch("/orders/{order_id}/stages/{stage_id}/transfer")
+def transfer_stage(order_id: str, stage_id: int, tech=Depends(get_tech), conn=Depends(db)):
+    now = datetime.now().isoformat()
+    conn.execute(
+        "UPDATE order_stages SET transferred_at=?, accepted_at=? WHERE id=? AND order_id=?",
+        (now, now, stage_id, order_id)
+    )
+    conn.commit()
+    return {"success": True, "order": _fetch_order(conn, order_id)}
+
+@app.patch("/orders/{order_id}/stages/{stage_id}/complete")
+def complete_stage(order_id: str, stage_id: int, tech=Depends(get_tech), conn=Depends(db)):
+    now = datetime.now().isoformat()
+    conn.execute(
+        "UPDATE order_stages SET actual_date=? WHERE id=? AND order_id=?",
+        (now, stage_id, order_id)
+    )
+    conn.commit()
+    return {"success": True, "order": _fetch_order(conn, order_id)}
 
 @app.post("/orders/{order_id}/comments")
 def add_comment(order_id: str, data: CommentAdd, tech=Depends(get_tech), conn=Depends(db)):

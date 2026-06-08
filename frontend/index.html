@@ -155,6 +155,18 @@
   .stage-dates { font-size:11px; color:#94a3b8; line-height:1.7; }
   .stage-qty-tag { font-size:11px; color:#64748b; background:#f8fafc; padding:2px 8px; border-radius:6px; font-weight:600; margin-top:4px; display:inline-block; }
   .stage-defect { color:#ef4444; font-size:11px; margin-top:4px; }
+  .stage-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .stage-btn { border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer; transition:opacity .15s; }
+  .stage-btn:active { opacity:.75; }
+  .stage-btn.transfer { background:#eff6ff; color:#2563eb; }
+  .stage-btn.complete { background:#dcfce7; color:#16a34a; }
+  .stage-btn.del-stage { background:#fee2e2; color:#dc2626; }
+  .add-stage-form { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px; margin-top:12px; display:none; flex-direction:column; gap:8px; }
+  .stage-form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stage-form-input { width:100%; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none; background:#fff; }
+  .stage-form-input:focus { border-color:#2563eb; }
+  .stage-toggle-btn { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; padding:10px 0 2px; }
+  .stage-save-btn { background:#2563eb; color:#fff; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
 
   /* ── СКИДКА (инлайн-редактирование) ── */
   .discount-wrap { display:flex; align-items:center; gap:6px; }
@@ -795,29 +807,71 @@ function renderDetail(o) {
   </div>`;
 
   // ── ЭТАПЫ ──
-  let stagesSection = '';
-  if (o.stages && o.stages.length) {
-    const items = o.stages.map(s => {
-      let cls = 'pending', dot = s.n;
-      if (s.actual_date) { cls = 'done'; dot = '✓'; }
-      else if (s.transferred_at || s.accepted_at) { cls = 'active'; }
-      const dates = s.transferred_at
-        ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date ? `<br>Выполнено: ${fmtShort(s.actual_date)}` : '<br><em>Выполняется...</em>'}`
-        : '<em style="color:#cbd5e1">Ожидает очереди</em>';
-      return `
-      <div class="stage-item ${cls}">
-        <div class="stage-dot">${dot}</div>
-        <div class="stage-body">
-          <div class="stage-op">${s.operation}</div>
-          <div class="stage-tech">👤 ${s.technician}</div>
-          <div class="stage-dates">${dates}</div>
-          <span class="stage-qty-tag">× ${s.qty} ед.</span>
-          ${s.defect_comment ? `<div class="stage-defect">⚠ ${s.defect_comment}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-    stagesSection = `<div class="detail-card"><h3>Этапы производства</h3><div class="stages-list">${items}</div></div>`;
-  }
+  const stageItems = (o.stages || []).map(s => {
+    let cls = 'pending', dot = s.n;
+    if (s.actual_date) { cls = 'done'; dot = '✓'; }
+    else if (s.transferred_at || s.accepted_at) { cls = 'active'; }
+    const dates = s.transferred_at
+      ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date ? `<br>Выполнено: ${fmtShort(s.actual_date)}` : '<br><em>Выполняется...</em>'}`
+      : `${s.planned_date ? 'План: ' + fmtDate(s.planned_date) : '<em style="color:#cbd5e1">Ожидает очереди</em>'}`;
+    const actions = isAdmin ? `
+    <div class="stage-actions">
+      ${!s.transferred_at && !s.actual_date ? `<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ Передать в работу</button>` : ''}
+      ${s.transferred_at && !s.actual_date ? `<button class="stage-btn complete" onclick="completeStage('${o.id}',${s.id})">✓ Завершить</button>` : ''}
+      <button class="stage-btn del-stage" onclick="deleteStage('${o.id}',${s.id})">× Удалить</button>
+    </div>` : '';
+    return `
+    <div class="stage-item ${cls}">
+      <div class="stage-dot">${dot}</div>
+      <div class="stage-body">
+        <div class="stage-op">${s.operation}</div>
+        <div class="stage-tech">👤 ${s.technician}</div>
+        <div class="stage-dates">${dates}</div>
+        <span class="stage-qty-tag">× ${s.qty} ед.</span>
+        ${s.defect_comment ? `<div class="stage-defect">⚠ ${s.defect_comment}</div>` : ''}
+        ${actions}
+      </div>
+    </div>`;
+  }).join('');
+
+  const techOpts = techniciansList.map(t =>
+    `<option value="${t.id}">${t.name}</option>`).join('');
+
+  const addStageForm = isAdmin ? `
+  <button class="stage-toggle-btn" onclick="toggleAddStageForm('${o.id}')">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    Добавить этап
+  </button>
+  <div class="add-stage-form" id="add-stage-wrap-${o.id}">
+    <input class="stage-form-input" id="stage-op-${o.id}" list="stage-ops-${o.id}" placeholder="Операция (напр. Моделирование)">
+    <datalist id="stage-ops-${o.id}">
+      <option value="Моделирование">
+      <option value="Гипсовка">
+      <option value="Гравировка">
+      <option value="Нанесение керамики">
+      <option value="Обжиг">
+      <option value="Глазуровка">
+      <option value="Сборка">
+      <option value="Примерка">
+      <option value="Полировка">
+    </datalist>
+    <div class="stage-form-row">
+      <select class="stage-form-input" id="stage-tech-${o.id}">
+        <option value="">— Техник —</option>
+        ${techOpts}
+      </select>
+      <input class="stage-form-input" id="stage-qty-${o.id}" type="number" min="1" max="99" value="1" placeholder="Кол-во">
+    </div>
+    <input class="stage-form-input" id="stage-date-${o.id}" type="date" placeholder="Плановая дата">
+    <button class="stage-save-btn" onclick="addStage('${o.id}')">Добавить этап</button>
+  </div>` : '';
+
+  const stagesSection = `
+  <div class="detail-card">
+    <h3>Этапы производства</h3>
+    ${stageItems ? `<div class="stages-list">${stageItems}</div>` : `<div style="color:#94a3b8;font-size:13px;padding:8px 0">Этапы не заданы</div>`}
+    ${addStageForm}
+  </div>`;
 
   // ── СТАТУС ──
   const statuses = ['новый','в_работе','на_проверке','готово','сдано'];
@@ -970,6 +1024,74 @@ async function saveDiscount(id) {
     showToast(val > 0 ? `Скидка ${val}% сохранена` : 'Скидка убрана');
     showDetail(id);
   } catch { showToast('Ошибка при сохранении скидки'); }
+}
+
+// ── ЭТАПЫ ─────────────────────────────────────────────────────────────────────
+function toggleAddStageForm(orderId) {
+  const wrap = document.getElementById(`add-stage-wrap-${orderId}`);
+  if (!wrap) return;
+  wrap.style.display = wrap.style.display === 'none' || !wrap.style.display ? 'flex' : 'none';
+}
+
+async function addStage(orderId) {
+  const op      = document.getElementById(`stage-op-${orderId}`)?.value.trim();
+  const techId  = document.getElementById(`stage-tech-${orderId}`)?.value;
+  const qty     = parseInt(document.getElementById(`stage-qty-${orderId}`)?.value) || 1;
+  const planned = document.getElementById(`stage-date-${orderId}`)?.value || null;
+  if (!op)     { showToast('Укажите операцию', 2000); return; }
+  if (!techId) { showToast('Выберите техника', 2000); return; }
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/stages`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({operation: op, technician_id: techId, qty, planned_date: planned, article: ''})
+    });
+    if (!r.ok) { const e = await r.json(); showToast(e.detail || 'Ошибка', 2500); return; }
+    const data = await r.json();
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showToast('Этап добавлен');
+    showDetail(orderId);
+  } catch { showToast('Ошибка при добавлении этапа'); }
+}
+
+async function deleteStage(orderId, stageId) {
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/stages/${stageId}`, {
+      method: 'DELETE', headers: {'x-pin':localStorage.getItem('pin')}
+    });
+    const data = await r.json();
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showToast('Этап удалён');
+    showDetail(orderId);
+  } catch { showToast('Ошибка при удалении'); }
+}
+
+async function transferStage(orderId, stageId) {
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/stages/${stageId}/transfer`, {
+      method: 'PATCH', headers: {'x-pin':localStorage.getItem('pin')}
+    });
+    const data = await r.json();
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showToast('Передан в работу');
+    showDetail(orderId);
+  } catch { showToast('Ошибка'); }
+}
+
+async function completeStage(orderId, stageId) {
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/stages/${stageId}/complete`, {
+      method: 'PATCH', headers: {'x-pin':localStorage.getItem('pin')}
+    });
+    const data = await r.json();
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showToast('Этап завершён');
+    showDetail(orderId);
+  } catch { showToast('Ошибка'); }
 }
 
 async function addComment() {
