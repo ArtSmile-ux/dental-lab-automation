@@ -168,6 +168,57 @@
   .stage-toggle-btn { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; padding:10px 0 2px; }
   .stage-save-btn { background:#2563eb; color:#fff; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
 
+  /* ── СУБНАВИГАЦИЯ ── */
+  .sub-nav { display:flex; gap:4px; background:#f1f5f9; border-radius:10px; padding:4px; margin-bottom:14px; }
+  .sub-nav-btn { flex:1; padding:7px; border:none; background:none; border-radius:7px; font-size:13px; font-weight:600; color:#64748b; cursor:pointer; transition:all .15s; }
+  .sub-nav-btn.active { background:#fff; color:#1e293b; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+
+  /* ── АКТЫ ── */
+  .act-card { background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,.07); cursor:pointer; transition:transform .1s; border-left:4px solid #6366f1; }
+  .act-card:active { transform:scale(.98); }
+  .act-num { font-size:12px; font-weight:700; color:#6366f1; margin-bottom:4px; }
+  .act-patient { font-size:15px; font-weight:700; color:#1e293b; margin-bottom:3px; }
+  .act-meta { font-size:12px; color:#64748b; }
+  .act-total { font-size:15px; font-weight:800; color:#16a34a; }
+  .act-create-btn { display:flex; align-items:center; gap:6px; background:#6366f1; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:10px; }
+  .act-create-btn:active { opacity:.85; }
+
+  /* ── ПРАЙС-ЛИСТ ── */
+  .price-row { display:flex; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid #f1f5f9; }
+  .price-row:last-child { border-bottom:none; }
+  .price-art { background:#f1f5f9; color:#64748b; font-size:10px; font-weight:700; padding:3px 7px; border-radius:6px; white-space:nowrap; flex-shrink:0; min-width:44px; text-align:center; }
+  .price-name { flex:1; font-size:13px; color:#1e293b; font-weight:500; }
+  .price-input { width:90px; border:1.5px solid #e2e8f0; border-radius:8px; padding:5px 8px; font-size:13px; font-weight:700; text-align:right; outline:none; color:#1e293b; }
+  .price-input:focus { border-color:#2563eb; }
+  .price-unit { font-size:11px; color:#94a3b8; flex-shrink:0; }
+
+  /* ── ПЕЧАТЬ АКТА ── */
+  #act-print-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; z-index:200; overflow-y:auto; padding:24px 20px 100px; max-width:430px; margin:0 auto; }
+  .print-header { text-align:center; margin-bottom:20px; padding-bottom:12px; border-bottom:2px solid #1e293b; }
+  .print-title { font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+  .print-num { font-size:18px; font-weight:800; color:#1e293b; margin-bottom:4px; }
+  .print-date { font-size:12px; color:#64748b; }
+  .print-parties { margin-bottom:16px; font-size:13px; }
+  .print-parties div { padding:3px 0; line-height:1.5; }
+  .print-parties strong { color:#1e293b; }
+  .print-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:16px; }
+  .print-table th { background:#f1f5f9; padding:7px 6px; text-align:left; font-weight:700; border:1px solid #e2e8f0; }
+  .print-table td { padding:7px 6px; border:1px solid #e2e8f0; vertical-align:top; }
+  .print-totals { border-top:2px solid #1e293b; padding-top:10px; }
+  .print-total-row { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; }
+  .print-total-row.final { font-size:15px; font-weight:800; }
+  .print-sign { margin-top:30px; display:flex; justify-content:space-between; font-size:12px; }
+  .print-sign div { text-align:center; min-width:120px; }
+  .print-sign .sign-line { border-top:1px solid #1e293b; padding-top:4px; margin-top:30px; }
+  .print-actions { position:fixed; bottom:0; left:0; right:0; max-width:430px; margin:0 auto; background:#fff; border-top:1px solid #e2e8f0; padding:12px 16px; display:flex; gap:8px; }
+  .btn-print { flex:1; background:#1e293b; color:#fff; border:none; border-radius:10px; padding:13px; font-size:14px; font-weight:700; cursor:pointer; }
+  .btn-close-print { flex:1; background:#f1f5f9; color:#1e293b; border:none; border-radius:10px; padding:13px; font-size:14px; font-weight:700; cursor:pointer; }
+  @media print {
+    body > * { display:none !important; }
+    #act-print-overlay { display:block !important; position:static !important; padding:0 !important; }
+    .print-actions { display:none !important; }
+  }
+
   /* ── СКИДКА (инлайн-редактирование) ── */
   .discount-wrap { display:flex; align-items:center; gap:6px; }
   .discount-input { width:62px; border:1.5px solid #e2e8f0; border-radius:8px; padding:4px 8px; font-size:14px; font-weight:700; color:#1e293b; outline:none; text-align:center; transition:border .15s; }
@@ -383,6 +434,16 @@
     <div id="dashboard-content"><div class="loading-text">Загрузка...</div></div>
   </div>
 
+  <!-- ЭКРАН: АКТЫ И ЦЕНЫ -->
+  <div class="screen" id="screen-acts">
+    <div class="sub-nav">
+      <button class="sub-nav-btn active" id="subnav-acts" onclick="showActsTab('acts')">Акты</button>
+      <button class="sub-nav-btn" id="subnav-prices" onclick="showActsTab('prices')">Прайс-лист</button>
+    </div>
+    <div id="acts-content"><div class="loading-text">Загрузка...</div></div>
+    <div id="prices-content" style="display:none"></div>
+  </div>
+
   <div class="bottom-nav" id="bottom-nav">
     <button class="bnav-btn active" id="bnav-orders" onclick="showOrders()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -398,10 +459,23 @@
       </div>
       Заказ
     </button>
+    <button class="bnav-btn" id="bnav-acts" onclick="showActs()" style="display:none">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Акты
+    </button>
     <button class="bnav-btn" id="bnav-dash" onclick="showDashboard()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       Дашборд
     </button>
+  </div>
+</div>
+
+<!-- ПЕЧАТЬ АКТА -->
+<div id="act-print-overlay">
+  <div id="act-print-content"></div>
+  <div class="print-actions">
+    <button class="btn-close-print" onclick="closeActPrint()">← Назад</button>
+    <button class="btn-print" onclick="window.print()">🖨 Печать</button>
   </div>
 </div>
 
@@ -418,6 +492,7 @@ let nomenclature = [];
 let filterTech = '';
 let filterClinic = '';
 let filterStatus = '';
+let acts = [];
 
 // ── УТИЛИТЫ ──────────────────────────────────────────────────────────────────
 function fmt(iso) {
@@ -465,7 +540,7 @@ function showToast(msg, ms=2200) {
   setTimeout(() => t.classList.remove('show'), ms);
 }
 function setNav(active) {
-  ['bnav-orders','bnav-msgs','bnav-create','bnav-dash'].forEach(id => {
+  ['bnav-orders','bnav-msgs','bnav-create','bnav-acts','bnav-dash'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
@@ -518,6 +593,7 @@ function startApp() {
   loadNomenclature();
   if (currentUser.role === 'admin') {
     document.getElementById('bnav-create').style.display = 'flex';
+    document.getElementById('bnav-acts').style.display = 'flex';
     loadTechniciansForForm().then(() => loadOrders());
   } else {
     loadOrders();
@@ -878,7 +954,12 @@ function renderDetail(o) {
   const statusBtns = statuses.map(s =>
     `<button class="status-btn ${o.status === s ? 'active' : ''}" onclick="changeStatus('${o.id}','${s}')">${statusLabel(s)}</button>`
   ).join('');
-  const statusSection = `<div class="detail-card"><h3>Статус работы</h3><div class="status-row">${statusBtns}</div></div>`;
+  const actBtn = isAdmin ? `
+  <button class="act-create-btn" onclick="createAct('${o.id}')">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    Выписать акт
+  </button>` : '';
+  const statusSection = `<div class="detail-card"><h3>Статус работы</h3><div class="status-row">${statusBtns}</div>${actBtn}</div>`;
 
   // ── СООБЩЕНИЯ ──
   const msgs = (o.messages||[]).map(m => `
@@ -1110,6 +1191,174 @@ async function addComment() {
     input.value = '';
     showDetail(currentOrderId);
   } catch { alert('Ошибка при добавлении комментария'); }
+}
+
+// ── АКТЫ ──────────────────────────────────────────────────────────────────────
+async function showActs() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-acts').classList.add('active');
+  setNav('bnav-acts');
+  showActsTab('acts');
+  await loadActs();
+}
+
+function showActsTab(tab) {
+  document.getElementById('subnav-acts').classList.toggle('active', tab === 'acts');
+  document.getElementById('subnav-prices').classList.toggle('active', tab === 'prices');
+  document.getElementById('acts-content').style.display   = tab === 'acts'   ? 'block' : 'none';
+  document.getElementById('prices-content').style.display = tab === 'prices' ? 'block' : 'none';
+  if (tab === 'prices') loadPricesScreen();
+}
+
+async function loadActs() {
+  try {
+    const r = await fetch(`${API}/acts`, {headers:{'x-pin':localStorage.getItem('pin')}});
+    const data = await r.json();
+    acts = data.acts;
+    renderActs();
+  } catch { document.getElementById('acts-content').innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+}
+
+function renderActs() {
+  const el = document.getElementById('acts-content');
+  if (!acts.length) {
+    el.innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><div>Нет актов. Выпишите акт из заказа.</div></div>`;
+    return;
+  }
+  el.innerHTML = acts.map(a => {
+    const disc = a.discount > 0 ? `<span class="badge yellow" style="margin-left:4px">−${a.discount}%</span>` : '';
+    const dateStr = a.created_at ? a.created_at.slice(0,10).split('-').reverse().join('.') : '—';
+    return `
+    <div class="act-card" onclick="showActPrint(${a.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="act-num">${a.act_number}</div>
+          <div class="act-patient">${a.patient_name}</div>
+          <div class="act-meta">${a.clinic_name} · ${a.doctor_name} · ${dateStr}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="act-total">${Number(a.final_total).toLocaleString('ru')} ₽</div>
+          ${disc}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function createAct(orderId) {
+  try {
+    const r = await fetch(`${API}/acts`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({order_id: orderId})
+    });
+    if (!r.ok) { const e = await r.json(); showToast(e.detail || 'Ошибка', 2500); return; }
+    const data = await r.json();
+    acts.unshift(data.act);
+    showToast(`Акт ${data.act.act_number} выписан`);
+    showActPrint(data.act.id);
+  } catch { showToast('Ошибка при создании акта'); }
+}
+
+function showActPrint(actId) {
+  const act = acts.find(a => a.id === actId);
+  if (!act) return;
+  const dateStr = act.created_at ? act.created_at.slice(0,10).split('-').reverse().join('.') : '—';
+  const disc = act.discount || 0;
+  const rows = (act.items || []).map((it, i) => `
+    <tr>
+      <td style="text-align:center">${i + 1}</td>
+      <td>${it.article || '—'}</td>
+      <td>${it.name}</td>
+      <td style="text-align:center">${it.qty}</td>
+      <td style="text-align:right">${Number(it.price).toLocaleString('ru')}</td>
+      <td style="text-align:right">${Number(it.total).toLocaleString('ru')}</td>
+    </tr>`).join('');
+
+  document.getElementById('act-print-content').innerHTML = `
+  <div class="print-header">
+    <div class="print-title">Акт выполненных работ</div>
+    <div class="print-num">${act.act_number}</div>
+    <div class="print-date">от ${dateStr}</div>
+  </div>
+  <div class="print-parties">
+    <div><strong>Исполнитель:</strong> Зуботехническая лаборатория ArtSmile</div>
+    <div><strong>Заказчик (клиника):</strong> ${act.clinic_name}</div>
+    <div><strong>Врач:</strong> ${act.doctor_name}</div>
+    <div><strong>Пациент:</strong> ${act.patient_name}</div>
+    <div><strong>Заказ №:</strong> ${act.order_id}</div>
+  </div>
+  <table class="print-table">
+    <thead>
+      <tr>
+        <th style="width:28px;text-align:center">№</th>
+        <th style="width:44px">Арт.</th>
+        <th>Наименование</th>
+        <th style="width:36px;text-align:center">Кол.</th>
+        <th style="width:64px;text-align:right">Цена</th>
+        <th style="width:70px;text-align:right">Сумма</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="print-totals">
+    <div class="print-total-row"><span>Итого:</span><span>${Number(act.total).toLocaleString('ru')} ₽</span></div>
+    ${disc > 0 ? `<div class="print-total-row"><span>Скидка ${disc}%:</span><span>−${Number(act.total * disc / 100).toLocaleString('ru')} ₽</span></div>` : ''}
+    <div class="print-total-row final"><span>К оплате:</span><span>${Number(act.final_total).toLocaleString('ru')} ₽</span></div>
+  </div>
+  <div class="print-sign">
+    <div><div class="sign-line">Исполнитель</div></div>
+    <div><div class="sign-line">Заказчик</div></div>
+  </div>`;
+
+  document.getElementById('act-print-overlay').style.display = 'block';
+}
+
+function closeActPrint() {
+  document.getElementById('act-print-overlay').style.display = 'none';
+}
+
+// ── ЦЕНЫ НОМЕНКЛАТУРЫ ─────────────────────────────────────────────────────────
+async function loadPricesScreen() {
+  const el = document.getElementById('prices-content');
+  if (!nomenclature.length) await loadNomenclature();
+  renderPrices();
+}
+
+function renderPrices() {
+  const el = document.getElementById('prices-content');
+  if (!nomenclature.length) { el.innerHTML = '<div class="loading-text">Загрузка...</div>'; return; }
+  const rows = nomenclature.map(n => `
+  <div class="price-row">
+    <span class="price-art">${n.article}</span>
+    <span class="price-name">${n.name}</span>
+    <input class="price-input" type="number" min="0" step="100" value="${n.price}"
+           onblur="savePrice(${n.id}, this.value)"
+           onkeydown="if(event.key==='Enter'){this.blur()}">
+    <span class="price-unit">₽/шт</span>
+  </div>`).join('');
+  el.innerHTML = `
+  <div class="detail-card" style="padding:14px">
+    <h3>Цены номенклатуры</h3>
+    ${rows}
+  </div>`;
+}
+
+async function savePrice(id, rawVal) {
+  const price = parseFloat(rawVal);
+  if (isNaN(price) || price < 0) { showToast('Введите корректную цену', 2000); return; }
+  try {
+    const r = await fetch(`${API}/nomenclature/${id}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({price})
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const idx = nomenclature.findIndex(n => n.id === id);
+    if (idx >= 0) nomenclature[idx] = data.item;
+    showToast('Цена обновлена');
+  } catch { showToast('Ошибка при сохранении цены'); }
 }
 
 // ── НАВИГАЦИЯ ЭКРАНОВ ─────────────────────────────────────────────────────────

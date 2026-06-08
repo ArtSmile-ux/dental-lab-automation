@@ -98,6 +98,28 @@ def init_db():
         price   REAL DEFAULT 0,
         unit    TEXT DEFAULT 'шт'
     );
+    CREATE TABLE IF NOT EXISTS acts (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        act_number   TEXT NOT NULL UNIQUE,
+        order_id     TEXT NOT NULL,
+        clinic_name  TEXT NOT NULL,
+        doctor_name  TEXT NOT NULL,
+        patient_name TEXT NOT NULL,
+        created_at   TEXT NOT NULL,
+        created_by   TEXT NOT NULL,
+        total        REAL DEFAULT 0,
+        discount     REAL DEFAULT 0,
+        final_total  REAL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS act_items (
+        id      INTEGER PRIMARY KEY AUTOINCREMENT,
+        act_id  INTEGER NOT NULL,
+        article TEXT DEFAULT '',
+        name    TEXT NOT NULL,
+        qty     INTEGER DEFAULT 1,
+        price   REAL DEFAULT 0,
+        total   REAL DEFAULT 0
+    );
     """)
 
     # Migration: add new columns to existing orders table if absent
@@ -296,6 +318,12 @@ class StageAdd(BaseModel):
 
 class CommentAdd(BaseModel):
     text: str
+
+class ActCreate(BaseModel):
+    order_id: str
+
+class NomUpdate(BaseModel):
+    price: float
 
 class OrderCreate(BaseModel):
     patient_name:  str
@@ -530,6 +558,63 @@ def get_technicians(tech=Depends(get_tech), conn=Depends(db)):
         raise HTTPException(status_code=403, detail="Только для руководителя")
     rows = conn.execute("SELECT id, name, city FROM technicians WHERE role != 'admin'").fetchall()
     return {"technicians": [dict(r) for r in rows]}
+
+@app.get("/acts")
+def get_acts(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    rows = conn.execute("SELECT * FROM acts ORDER BY id DESC").fetchall()
+    result = []
+    for row in rows:
+        act = dict(row)
+        act["items"] = [dict(r) for r in conn.execute(
+            "SELECT * FROM act_items WHERE act_id=? ORDER BY id", (act["id"],)).fetchall()]
+        result.append(act)
+    return {"acts": result}
+
+@app.post("/acts")
+def create_act(data: ActCreate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    order = _fetch_order(conn, data.order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    count = conn.execute("SELECT COUNT(*) FROM acts").fetchone()[0]
+    act_number = f"АКТ-{count + 1:06d}"
+    now = datetime.now().isoformat()
+    discount = order.get("discount") or 0
+    total = order.get("total") or 0
+    final_total = round(total * (1 - discount / 100), 2)
+    conn.execute(
+        "INSERT INTO acts (act_number,order_id,clinic_name,doctor_name,patient_name,"
+        "created_at,created_by,total,discount,final_total) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (act_number, data.order_id, order["clinic_name"], order["doctor_name"],
+         order["patient_name"], now, tech["name"], total, discount, final_total)
+    )
+    act_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    for item in order.get("items", []):
+        conn.execute(
+            "INSERT INTO act_items (act_id,article,name,qty,price,total) VALUES (?,?,?,?,?,?)",
+            (act_id, item["article"], item["name"], item["qty"], item["price"], item["total"])
+        )
+    conn.commit()
+    act = dict(conn.execute("SELECT * FROM acts WHERE id=?", (act_id,)).fetchone())
+    act["items"] = [dict(r) for r in conn.execute(
+        "SELECT * FROM act_items WHERE act_id=? ORDER BY id", (act_id,)).fetchall()]
+    return {"success": True, "act": act}
+
+@app.patch("/nomenclature/{item_id}")
+def update_nomenclature(item_id: int, data: NomUpdate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if not conn.execute("SELECT id FROM nomenclature WHERE id=?", (item_id,)).fetchone():
+        raise HTTPException(status_code=404, detail="Позиция не найдена")
+    if data.price < 0:
+        raise HTTPException(status_code=400, detail="Цена не может быть отрицательной")
+    conn.execute("UPDATE nomenclature SET price=? WHERE id=?", (data.price, item_id))
+    conn.commit()
+    return {"success": True, "item": dict(conn.execute(
+        "SELECT * FROM nomenclature WHERE id=?", (item_id,)).fetchone())}
 
 @app.get("/metrics")
 def get_metrics(tech=Depends(get_tech), conn=Depends(db)):
