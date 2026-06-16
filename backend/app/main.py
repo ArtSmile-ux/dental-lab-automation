@@ -19,13 +19,8 @@ DB_PATH  = os.path.join(os.path.dirname(__file__), "../../dental_lab.db")
 FRONTEND = os.path.join(os.path.dirname(__file__), "../../frontend/index.html")
 
 # ── Alfa Bank config ──────────────────────────────────────────────────────────
-ALFA_CLIENT_ID    = os.environ.get("ALFA_CLIENT_ID",    "7cb492ec-0181-4eb7-90ec-61da609f994f")
-ALFA_REDIRECT_URI = os.environ.get("ALFA_REDIRECT_URI", "http://localhost")
-ALFA_SCOPE        = "openid customer transactions"
 ALFA_CERT_PEM     = os.environ.get("ALFA_CERT_PEM", "")
 ALFA_CERT_KEY     = os.environ.get("ALFA_CERT_KEY", "")
-ALFA_AUTH_URL     = "https://id-sandbox.alfabank.ru/oidc/authorize"
-ALFA_TOKEN_URL    = "https://sandbox.alfabank.ru/oidc/token"
 ALFA_API_BASE     = "https://sandbox.alfabank.ru/api"
 
 app = FastAPI(title="Dental Lab API")
@@ -363,8 +358,8 @@ class OrderCreate(BaseModel):
     discount:      float = 0
     total:         float = 0
 
-class AlfaCode(BaseModel):
-    code: str
+class AlfaKeySet(BaseModel):
+    api_key: str
 
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
@@ -661,50 +656,22 @@ def get_metrics(tech=Depends(get_tech), conn=Depends(db)):
 def alfa_status(tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403)
-    row = conn.execute("SELECT access_token, expires_at FROM alfa_tokens WHERE id=1").fetchone()
+    row = conn.execute("SELECT access_token, updated_at FROM alfa_tokens WHERE id=1").fetchone()
     if row and row["access_token"]:
-        return {"connected": True, "expires_at": row["expires_at"]}
+        return {"connected": True, "updated_at": row["updated_at"]}
     return {"connected": False}
 
-@app.get("/alfa/auth-url")
-def alfa_auth_url(tech=Depends(get_tech)):
-    if tech.get("role") != "admin":
-        raise HTTPException(status_code=403)
-    params = {
-        "response_type": "code",
-        "client_id":     ALFA_CLIENT_ID,
-        "redirect_uri":  ALFA_REDIRECT_URI,
-        "scope":         ALFA_SCOPE,
-        "state":         secrets.token_urlsafe(12),
-    }
-    return {"url": f"{ALFA_AUTH_URL}?{urlencode(params)}"}
-
 @app.post("/alfa/connect")
-async def alfa_connect(data: AlfaCode, tech=Depends(get_tech), conn=Depends(db)):
+def alfa_connect(data: AlfaKeySet, tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403)
-    if not _HTTPX:
-        raise HTTPException(status_code=503, detail="httpx не установлен — обновите зависимости на сервере")
-
-    cert = (ALFA_CERT_PEM, ALFA_CERT_KEY) if ALFA_CERT_PEM and ALFA_CERT_KEY else None
-    async with httpx.AsyncClient(cert=cert, verify=True, timeout=15) as client:
-        resp = await client.post(ALFA_TOKEN_URL, data={
-            "grant_type":   "authorization_code",
-            "code":         data.code,
-            "redirect_uri": ALFA_REDIRECT_URI,
-            "client_id":    ALFA_CLIENT_ID,
-        })
-    if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail=f"Ошибка банка: {resp.text[:300]}")
-
-    tok = resp.json()
-    exp = (datetime.now() + timedelta(seconds=tok.get("expires_in", 3600))).isoformat()
+    if not data.api_key.strip():
+        raise HTTPException(status_code=400, detail="API Key не может быть пустым")
     conn.execute(
         "INSERT INTO alfa_tokens (id, access_token, refresh_token, expires_at, updated_at) "
-        "VALUES (1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET "
-        "access_token=excluded.access_token, refresh_token=excluded.refresh_token, "
-        "expires_at=excluded.expires_at, updated_at=excluded.updated_at",
-        (tok.get("access_token"), tok.get("refresh_token"), exp, datetime.now().isoformat())
+        "VALUES (1,?,NULL,NULL,?) ON CONFLICT(id) DO UPDATE SET "
+        "access_token=excluded.access_token, updated_at=excluded.updated_at",
+        (data.api_key.strip(), datetime.now().isoformat())
     )
     conn.commit()
     return {"success": True}
@@ -714,22 +681,23 @@ async def alfa_transactions(tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403)
     if not _HTTPX:
-        raise HTTPException(status_code=503, detail="httpx не установлен — обновите зависимости на сервере")
+        raise HTTPException(status_code=503, detail="httpx не установлен на сервере")
 
     row = conn.execute("SELECT access_token FROM alfa_tokens WHERE id=1").fetchone()
     if not row or not row["access_token"]:
         raise HTTPException(status_code=400, detail="Банк не подключён")
 
     cert = (ALFA_CERT_PEM, ALFA_CERT_KEY) if ALFA_CERT_PEM and ALFA_CERT_KEY else None
-    async with httpx.AsyncClient(cert=cert, verify=True, timeout=15) as client:
+    async with httpx.AsyncClient(cert=cert, verify=False, timeout=15) as client:
         resp = await client.get(
-            f"{ALFA_API_BASE}/accounts",
-            headers={"Authorization": f"Bearer {row['access_token']}"}
+            f"{ALFA_API_BASE}/v1/accounts",
+            headers={"Authorization": f"API_KEY {row['access_token']}"}
         )
     if resp.status_code == 401:
-        raise HTTPException(status_code=401, detail="Токен устарел — переподключитесь")
+        raise HTTPException(status_code=401, detail="API Key недействителен — проверьте ключ")
     if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail=f"Ошибка API банка: {resp.text[:300]}")
+        raise HTTPException(status_code=resp.status_code,
+                            detail=f"Ошибка API банка ({resp.status_code}): {resp.text[:300]}")
     return resp.json()
 
 @app.delete("/alfa/disconnect")
