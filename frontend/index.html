@@ -271,6 +271,23 @@
   .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; z-index:999; display:none; white-space:nowrap; }
   .toast.show { display:block; animation:fadeInUp .2s ease; }
   @keyframes fadeInUp { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+  /* ── БАНК ── */
+  .bank-header { background:#fff; border-radius:16px; padding:24px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); text-align:center; }
+  .bank-logo { font-size:24px; font-weight:800; color:#ef3124; margin-bottom:6px; letter-spacing:-.5px; }
+  .bank-status { font-size:14px; font-weight:700; color:#64748b; margin-bottom:6px; }
+  .bank-status.connected { color:#16a34a; }
+  .bank-exp { font-size:12px; color:#94a3b8; margin-bottom:14px; }
+  .bank-desc { font-size:13px; color:#64748b; margin:10px 0 18px; line-height:1.6; }
+  .btn-danger-sm { background:#fee2e2; color:#dc2626; border:none; border-radius:8px; padding:8px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:8px; }
+  .btn-secondary { background:#f1f5f9; color:#1e293b; border:none; border-radius:10px; padding:10px 20px; font-size:15px; font-weight:700; cursor:pointer; }
+  .bank-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .bank-modal { background:#fff; border-radius:18px; padding:24px; max-width:420px; width:100%; }
+  .bank-modal h3 { font-size:17px; font-weight:800; margin-bottom:10px; }
+  .bank-modal p { font-size:13px; color:#64748b; margin-bottom:8px; line-height:1.6; }
+  .bank-modal code { background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px; color:#1e293b; word-break:break-all; }
+  .bank-steps { background:#f8fafc; border-radius:10px; padding:12px 16px; margin:10px 0; font-size:13px; color:#475569; line-height:2; }
+  .bank-steps b { color:#1e293b; }
 </style>
 </head>
 <body>
@@ -434,6 +451,11 @@
     <div id="dashboard-content"><div class="loading-text">Загрузка...</div></div>
   </div>
 
+
+  <!-- ЭКРАН: БАНК -->
+  <div class="screen" id="screen-bank">
+    <div id="bank-content"><div class="loading-text">Загрузка...</div></div>
+  </div>
   <!-- ЭКРАН: АКТЫ И ЦЕНЫ -->
   <div class="screen" id="screen-acts">
     <div class="sub-nav">
@@ -466,6 +488,10 @@
     <button class="bnav-btn" id="bnav-dash" onclick="showDashboard()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       Дашборд
+    </button>
+    <button class="bnav-btn" id="bnav-bank" onclick="showBank()" style="display:none">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Банк
     </button>
   </div>
 </div>
@@ -594,6 +620,7 @@ function startApp() {
   if (currentUser.role === 'admin') {
     document.getElementById('bnav-create').style.display = 'flex';
     document.getElementById('bnav-acts').style.display = 'flex';
+    document.getElementById('bnav-bank').style.display = 'flex';
     loadTechniciansForForm().then(() => loadOrders());
   } else {
     loadOrders();
@@ -1495,6 +1522,133 @@ async function showDashboard() {
   } catch { document.getElementById('dashboard-content').innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
 }
 
+// ── АЛЬФА-БАНК ────────────────────────────────────────────────────────────────
+async function showBank() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-bank').classList.add('active');
+  setNav('bnav-bank');
+  await renderBankScreen();
+}
+
+async function renderBankScreen() {
+  const content = document.getElementById('bank-content');
+  content.innerHTML = '<div class="loading-text">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API}/alfa/status`, {headers:{'x-pin':localStorage.getItem('pin')}});
+    const status = await r.json();
+    if (status.connected) {
+      const exp = new Date(status.expires_at).toLocaleString('ru');
+      content.innerHTML = `
+        <div class="bank-header">
+          <div class="bank-logo">Альфа&#8209;Банк</div>
+          <div class="bank-status connected">&#10003; Подключён</div>
+          <div class="bank-exp">Токен действует до: ${exp}</div>
+          <button class="btn-danger-sm" onclick="disconnectBank()">Отключить</button>
+        </div>
+        <div id="bank-txn"><div class="loading-text">Загрузка данных счёта...</div></div>`;
+      loadTransactions();
+    } else {
+      content.innerHTML = `
+        <div class="bank-header">
+          <div class="bank-logo">Альфа&#8209;Банк</div>
+          <div class="bank-status">Не подключён</div>
+          <p class="bank-desc">Подключите счёт Альфа-Банка для просмотра транзакций прямо в системе ArtSmile Lab.</p>
+          <button class="btn-primary" onclick="connectBank()">Подключить Альфа-Банк</button>
+        </div>`;
+    }
+  } catch {
+    content.innerHTML = '<div class="loading-text">Ошибка загрузки</div>';
+  }
+}
+
+async function connectBank() {
+  try {
+    const r = await fetch(`${API}/alfa/auth-url`, {headers:{'x-pin':localStorage.getItem('pin')}});
+    const data = await r.json();
+
+    const modal = document.createElement('div');
+    modal.className = 'bank-modal-overlay';
+    modal.innerHTML = `
+      <div class="bank-modal">
+        <h3>Подключение Альфа-Банка</h3>
+        <div class="bank-steps">
+          <b>Шаг 1.</b> Нажмите кнопку ниже — откроется страница банка<br>
+          <b>Шаг 2.</b> Войдите в Альфа ID (логин/пароль банка)<br>
+          <b>Шаг 3.</b> После входа браузер откроет пустую страницу<br>
+          <b>Шаг 4.</b> В адресной строке будет:<br>
+          <code>http://localhost?code=<b>ВАШИ_ЦИФРЫ</b>&state=...</code><br>
+          <b>Шаг 5.</b> Скопируйте только значение <b>code</b> и вставьте ниже
+        </div>
+        <button class="btn-primary" style="margin-bottom:14px;width:100%" onclick="window.open('${data.url}','_blank')">
+          Открыть страницу банка
+        </button>
+        <input id="alfa-code-input" class="form-input" placeholder="Вставьте code из адресной строки..." style="margin-bottom:12px">
+        <div style="display:flex;gap:8px">
+          <button class="btn-primary" style="flex:1" onclick="submitAlfaCode()">Подтвердить</button>
+          <button class="btn-secondary" onclick="this.closest('.bank-modal-overlay').remove()">Отмена</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  } catch {
+    showToast('Ошибка получения ссылки', 3000);
+  }
+}
+
+async function submitAlfaCode() {
+  const code = document.getElementById('alfa-code-input').value.trim();
+  if (!code) { showToast('Введите код из адресной строки'); return; }
+
+  document.querySelector('.bank-modal-overlay')?.remove();
+  showToast('Подключение...');
+
+  try {
+    const r = await fetch(`${API}/alfa/connect`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({code})
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('Ошибка: ' + (data.detail || 'неизвестно'), 4000); return; }
+    showToast('Альфа-Банк подключён!');
+    renderBankScreen();
+  } catch {
+    showToast('Ошибка подключения', 3000);
+  }
+}
+
+async function loadTransactions() {
+  const el = document.getElementById('bank-txn');
+  if (!el) return;
+  try {
+    const r = await fetch(`${API}/alfa/transactions`, {headers:{'x-pin':localStorage.getItem('pin')}});
+    if (r.status === 401) {
+      el.innerHTML = '<div class="detail-card"><p style="color:#dc2626;text-align:center">Токен устарел — переподключитесь</p></div>';
+      return;
+    }
+    const data = await r.json();
+    const list = Array.isArray(data) ? data : (data.accounts || data.data || []);
+    if (!list.length) {
+      el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#64748b">Данных нет</p></div>';
+      return;
+    }
+    el.innerHTML = '<div class="section-title">Счета</div>' + list.map(acc => `
+      <div class="detail-card">
+        <div class="detail-row"><span class="dl">Счёт</span><span class="dv">${acc.accountName || acc.account || '—'}</span></div>
+        <div class="detail-row"><span class="dl">Номер</span><span class="dv" style="font-size:13px">${acc.accountNumber || acc.id || '—'}</span></div>
+        <div class="detail-row"><span class="dl">Баланс</span><span class="dv" style="color:#16a34a;font-size:17px">${(acc.balance ?? acc.amount ?? '—').toLocaleString?.('ru') ?? (acc.balance ?? '—')} ${acc.currency || 'RUB'}</span></div>
+      </div>`).join('');
+  } catch {
+    el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#dc2626">Ошибка загрузки транзакций</p></div>';
+  }
+}
+
+async function disconnectBank() {
+  if (!confirm('Отключить Альфа-Банк от ArtSmile Lab?')) return;
+  await fetch(`${API}/alfa/disconnect`, {method:'DELETE', headers:{'x-pin':localStorage.getItem('pin')}});
+  showToast('Банк отключён');
+  renderBankScreen();
+}
+
 // ── ИНИЦИАЛИЗАЦИЯ ─────────────────────────────────────────────────────────────
 window.onload = () => {
   setTimeout(() => {
@@ -1513,3 +1667,4 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
