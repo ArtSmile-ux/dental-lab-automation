@@ -24,9 +24,9 @@ ALFA_REDIRECT_URI = os.environ.get("ALFA_REDIRECT_URI", "http://localhost")
 ALFA_SCOPE        = "openid customer transactions"
 ALFA_CERT_PEM     = os.environ.get("ALFA_CERT_PEM", "")
 ALFA_CERT_KEY     = os.environ.get("ALFA_CERT_KEY", "")
-ALFA_AUTH_URL     = "https://id.alfabank.ru/o/oauth2/v2/authorize"
-ALFA_TOKEN_URL    = "https://id.alfabank.ru/o/oauth2/v2/token"
-ALFA_API_BASE     = "https://apiws.alfabank.ru/alfabank/alfaidp/api/v3"
+ALFA_AUTH_URL     = "https://id-sandbox.alfabank.ru/oidc/authorize"
+ALFA_TOKEN_URL    = "https://sandbox.alfabank.ru/oidc/token"
+ALFA_API_BASE     = "https://sandbox.alfabank.ru/api"
 
 app = FastAPI(title="Dental Lab API")
 
