@@ -3,12 +3,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import sqlite3
+import secrets
+from urllib.parse import urlencode
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "../../dental_lab.db")
+try:
+    import httpx
+    _HTTPX = True
+except ImportError:
+    _HTTPX = False
+
+DB_PATH  = os.path.join(os.path.dirname(__file__), "../../dental_lab.db")
 FRONTEND = os.path.join(os.path.dirname(__file__), "../../frontend/index.html")
+
+# ── Alfa Bank config ──────────────────────────────────────────────────────────
+ALFA_CLIENT_ID    = os.environ.get("ALFA_CLIENT_ID",    "7cb492ec-0181-4eb7-90ec-61da609f994f")
+ALFA_REDIRECT_URI = os.environ.get("ALFA_REDIRECT_URI", "http://localhost")
+ALFA_SCOPE        = "openid customer transactions"
+ALFA_CERT_PEM     = os.environ.get("ALFA_CERT_PEM", "")
+ALFA_CERT_KEY     = os.environ.get("ALFA_CERT_KEY", "")
+ALFA_AUTH_URL     = "https://id.alfabank.ru/o/oauth2/v2/authorize"
+ALFA_TOKEN_URL    = "https://id.alfabank.ru/o/oauth2/v2/token"
+ALFA_API_BASE     = "https://apiws.alfabank.ru/alfabank/alfaidp/api/v3"
 
 app = FastAPI(title="Dental Lab API")
 
@@ -120,6 +138,13 @@ def init_db():
         price   REAL DEFAULT 0,
         total   REAL DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS alfa_tokens (
+        id            INTEGER PRIMARY KEY CHECK (id = 1),
+        access_token  TEXT,
+        refresh_token TEXT,
+        expires_at    TEXT,
+        updated_at    TEXT
+    );
     """)
 
     # Migration: add new columns to existing orders table if absent
@@ -176,7 +201,6 @@ def init_db():
              "2026-06-03T20:12:56","2026-06-10T00:00:00","2026-06-10T00:00:00",
              "A2","Ильяс",10500.0,"Не выставлено")
         )
-        # Изделия
         c.executemany(
             "INSERT INTO order_items (order_id,article,name,qty,price,total,is_delivered) VALUES (?,?,?,?,?,?,?)",
             [
@@ -184,7 +208,6 @@ def init_db():
                 ("ЗЛ-000107","0056","ЦК ПА на имп. винт/ф.",1,8500.0,8500.0,0),
             ]
         )
-        # Этапы производства
         c.executemany(
             "INSERT INTO order_stages (order_id,n,article,operation,qty,technician,transferred_at,accepted_at,planned_date,actual_date) VALUES (?,?,?,?,?,?,?,?,?,?)",
             [
@@ -340,6 +363,9 @@ class OrderCreate(BaseModel):
     discount:      float = 0
     total:         float = 0
 
+class AlfaCode(BaseModel):
+    code: str
+
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
@@ -439,7 +465,6 @@ def add_order_item(order_id: str, data: OrderItemAdd, tech=Depends(get_tech), co
         "INSERT INTO order_items (order_id,article,name,qty,price,total,is_delivered) VALUES (?,?,?,?,?,?,0)",
         (order_id, nom["article"], nom["name"], data.qty, nom["price"], total)
     )
-    # Пересчёт суммы заказа
     new_total = conn.execute(
         "SELECT COALESCE(SUM(total),0) FROM order_items WHERE order_id=?", (order_id,)
     ).fetchone()[0]
@@ -509,7 +534,6 @@ def delete_stage(order_id: str, stage_id: int, tech=Depends(get_tech), conn=Depe
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Только для руководителя")
     conn.execute("DELETE FROM order_stages WHERE id=? AND order_id=?", (stage_id, order_id))
-    # Перенумерация
     stages = conn.execute(
         "SELECT id FROM order_stages WHERE order_id=? ORDER BY n", (order_id,)
     ).fetchall()
@@ -629,3 +653,89 @@ def get_metrics(tech=Depends(get_tech), conn=Depends(db)):
     on_time    = round(completed / total * 100) if total else 0
     return {"total_orders": total, "in_progress": in_prog, "completed": completed,
             "overdue": overdue, "on_time_percent": on_time}
+
+
+# ── ALFA BANK ──────────────────────────────────────────────────────────────────
+
+@app.get("/alfa/status")
+def alfa_status(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    row = conn.execute("SELECT access_token, expires_at FROM alfa_tokens WHERE id=1").fetchone()
+    if row and row["access_token"]:
+        return {"connected": True, "expires_at": row["expires_at"]}
+    return {"connected": False}
+
+@app.get("/alfa/auth-url")
+def alfa_auth_url(tech=Depends(get_tech)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    params = {
+        "response_type": "code",
+        "client_id":     ALFA_CLIENT_ID,
+        "redirect_uri":  ALFA_REDIRECT_URI,
+        "scope":         ALFA_SCOPE,
+        "state":         secrets.token_urlsafe(12),
+    }
+    return {"url": f"{ALFA_AUTH_URL}?{urlencode(params)}"}
+
+@app.post("/alfa/connect")
+async def alfa_connect(data: AlfaCode, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    if not _HTTPX:
+        raise HTTPException(status_code=503, detail="httpx не установлен — обновите зависимости на сервере")
+
+    cert = (ALFA_CERT_PEM, ALFA_CERT_KEY) if ALFA_CERT_PEM and ALFA_CERT_KEY else None
+    async with httpx.AsyncClient(cert=cert, verify=True, timeout=15) as client:
+        resp = await client.post(ALFA_TOKEN_URL, data={
+            "grant_type":   "authorization_code",
+            "code":         data.code,
+            "redirect_uri": ALFA_REDIRECT_URI,
+            "client_id":    ALFA_CLIENT_ID,
+        })
+    if resp.status_code != 200:
+        raise HTTPException(status_code=400, detail=f"Ошибка банка: {resp.text[:300]}")
+
+    tok = resp.json()
+    exp = (datetime.now() + timedelta(seconds=tok.get("expires_in", 3600))).isoformat()
+    conn.execute(
+        "INSERT INTO alfa_tokens (id, access_token, refresh_token, expires_at, updated_at) "
+        "VALUES (1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET "
+        "access_token=excluded.access_token, refresh_token=excluded.refresh_token, "
+        "expires_at=excluded.expires_at, updated_at=excluded.updated_at",
+        (tok.get("access_token"), tok.get("refresh_token"), exp, datetime.now().isoformat())
+    )
+    conn.commit()
+    return {"success": True}
+
+@app.get("/alfa/transactions")
+async def alfa_transactions(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    if not _HTTPX:
+        raise HTTPException(status_code=503, detail="httpx не установлен — обновите зависимости на сервере")
+
+    row = conn.execute("SELECT access_token FROM alfa_tokens WHERE id=1").fetchone()
+    if not row or not row["access_token"]:
+        raise HTTPException(status_code=400, detail="Банк не подключён")
+
+    cert = (ALFA_CERT_PEM, ALFA_CERT_KEY) if ALFA_CERT_PEM and ALFA_CERT_KEY else None
+    async with httpx.AsyncClient(cert=cert, verify=True, timeout=15) as client:
+        resp = await client.get(
+            f"{ALFA_API_BASE}/accounts",
+            headers={"Authorization": f"Bearer {row['access_token']}"}
+        )
+    if resp.status_code == 401:
+        raise HTTPException(status_code=401, detail="Токен устарел — переподключитесь")
+    if resp.status_code != 200:
+        raise HTTPException(status_code=400, detail=f"Ошибка API банка: {resp.text[:300]}")
+    return resp.json()
+
+@app.delete("/alfa/disconnect")
+def alfa_disconnect(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    conn.execute("DELETE FROM alfa_tokens WHERE id=1")
+    conn.commit()
+    return {"success": True}
