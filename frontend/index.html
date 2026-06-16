@@ -1546,12 +1546,12 @@ async function renderBankScreen() {
     const r = await fetch(`${API}/alfa/status`, {headers:{'x-pin':localStorage.getItem('pin')}});
     const status = await r.json();
     if (status.connected) {
-      const exp = new Date(status.expires_at).toLocaleString('ru');
+
       content.innerHTML = `
         <div class="bank-header">
           <div class="bank-logo">Альфа&#8209;Банк</div>
           <div class="bank-status connected">&#10003; Подключён</div>
-          <div class="bank-exp">Токен действует до: ${exp}</div>
+          <div class="bank-exp">Подключён: ${new Date(status.updated_at).toLocaleString('ru')}</div>
           <button class="btn-danger-sm" onclick="disconnectBank()">Отключить</button>
         </div>
         <div id="bank-txn"><div class="loading-text">Загрузка данных счёта...</div></div>`;
@@ -1571,50 +1571,35 @@ async function renderBankScreen() {
 }
 
 async function connectBank() {
-  try {
-    const r = await fetch(`${API}/alfa/auth-url`, {headers:{'x-pin':localStorage.getItem('pin')}});
-    const data = await r.json();
-
-    const modal = document.createElement('div');
-    modal.className = 'bank-modal-overlay';
-    modal.innerHTML = `
-      <div class="bank-modal">
-        <h3>Подключение Альфа-Банка</h3>
-        <div class="bank-steps">
-          <b>Шаг 1.</b> Нажмите кнопку ниже — откроется страница банка<br>
-          <b>Шаг 2.</b> Войдите в Альфа ID (логин/пароль банка)<br>
-          <b>Шаг 3.</b> После входа браузер откроет пустую страницу<br>
-          <b>Шаг 4.</b> В адресной строке будет:<br>
-          <code>http://localhost?code=<b>ВАШИ_ЦИФРЫ</b>&state=...</code><br>
-          <b>Шаг 5.</b> Скопируйте только значение <b>code</b> и вставьте ниже
-        </div>
-        <button class="btn-primary" style="margin-bottom:14px;width:100%" onclick="window.open('${data.url}','_blank')">
-          Открыть страницу банка
-        </button>
-        <input id="alfa-code-input" class="form-input" placeholder="Вставьте code из адресной строки..." style="margin-bottom:12px">
-        <div style="display:flex;gap:8px">
-          <button class="btn-primary" style="flex:1" onclick="submitAlfaCode()">Подтвердить</button>
-          <button class="btn-secondary" onclick="this.closest('.bank-modal-overlay').remove()">Отмена</button>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-  } catch {
-    showToast('Ошибка получения ссылки', 3000);
-  }
+  const modal = document.createElement('div');
+  modal.className = 'bank-modal-overlay';
+  modal.innerHTML = `
+    <div class="bank-modal">
+      <h3>Подключение Альфа-Банка</h3>
+      <p>Вставьте <b>API Key</b> из Портала разработчика Альфа-Банка<br>
+      (<a href="https://developers.alfabank.ru/" target="_blank" style="color:#2563eb">developers.alfabank.ru</a> → API Keys)</p>
+      <input id="alfa-key-input" class="form-input" placeholder="Вставьте API Key..." style="margin:14px 0;font-size:12px">
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" style="flex:1" onclick="submitAlfaKey()">Подключить</button>
+        <button class="btn-secondary" onclick="this.closest('.bank-modal-overlay').remove()">Отмена</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('alfa-key-input')?.focus(), 100);
 }
 
-async function submitAlfaCode() {
-  const code = document.getElementById('alfa-code-input').value.trim();
-  if (!code) { showToast('Введите код из адресной строки'); return; }
+async function submitAlfaKey() {
+  const key = document.getElementById('alfa-key-input').value.trim();
+  if (!key) { showToast('Введите API Key'); return; }
 
   document.querySelector('.bank-modal-overlay')?.remove();
-  showToast('Подключение...');
+  showToast('Сохранение...');
 
   try {
     const r = await fetch(`${API}/alfa/connect`, {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
-      body: JSON.stringify({code})
+      body: JSON.stringify({api_key: key})
     });
     const data = await r.json();
     if (!r.ok) { showToast('Ошибка: ' + (data.detail || 'неизвестно'), 4000); return; }
