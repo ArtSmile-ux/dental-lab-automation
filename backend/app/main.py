@@ -3,12 +3,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import sqlite3
+import secrets
+from urllib.parse import urlencode
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "../../dental_lab.db")
+try:
+    import httpx
+    _HTTPX = True
+except ImportError:
+    _HTTPX = False
+
+DB_PATH  = os.path.join(os.path.dirname(__file__), "../../dental_lab.db")
 FRONTEND = os.path.join(os.path.dirname(__file__), "../../frontend/index.html")
+
+# ── Alfa Bank config ──────────────────────────────────────────────────────────
+ALFA_CERT_PEM     = os.environ.get("ALFA_CERT_PEM", "")
+ALFA_CERT_KEY     = os.environ.get("ALFA_CERT_KEY", "")
+ALFA_API_BASE     = "https://sandbox.alfabank.ru/api"
 
 app = FastAPI(title="Dental Lab API")
 
@@ -120,6 +133,13 @@ def init_db():
         price   REAL DEFAULT 0,
         total   REAL DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS alfa_tokens (
+        id            INTEGER PRIMARY KEY CHECK (id = 1),
+        access_token  TEXT,
+        refresh_token TEXT,
+        expires_at    TEXT,
+        updated_at    TEXT
+    );
     """)
 
     # Migration: add new columns to existing orders table if absent
@@ -176,7 +196,6 @@ def init_db():
              "2026-06-03T20:12:56","2026-06-10T00:00:00","2026-06-10T00:00:00",
              "A2","Ильяс",10500.0,"Не выставлено")
         )
-        # Изделия
         c.executemany(
             "INSERT INTO order_items (order_id,article,name,qty,price,total,is_delivered) VALUES (?,?,?,?,?,?,?)",
             [
@@ -184,7 +203,6 @@ def init_db():
                 ("ЗЛ-000107","0056","ЦК ПА на имп. винт/ф.",1,8500.0,8500.0,0),
             ]
         )
-        # Этапы производства
         c.executemany(
             "INSERT INTO order_stages (order_id,n,article,operation,qty,technician,transferred_at,accepted_at,planned_date,actual_date) VALUES (?,?,?,?,?,?,?,?,?,?)",
             [
@@ -340,6 +358,9 @@ class OrderCreate(BaseModel):
     discount:      float = 0
     total:         float = 0
 
+class AlfaKeySet(BaseModel):
+    api_key: str
+
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
@@ -439,7 +460,6 @@ def add_order_item(order_id: str, data: OrderItemAdd, tech=Depends(get_tech), co
         "INSERT INTO order_items (order_id,article,name,qty,price,total,is_delivered) VALUES (?,?,?,?,?,?,0)",
         (order_id, nom["article"], nom["name"], data.qty, nom["price"], total)
     )
-    # Пересчёт суммы заказа
     new_total = conn.execute(
         "SELECT COALESCE(SUM(total),0) FROM order_items WHERE order_id=?", (order_id,)
     ).fetchone()[0]
@@ -509,7 +529,6 @@ def delete_stage(order_id: str, stage_id: int, tech=Depends(get_tech), conn=Depe
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Только для руководителя")
     conn.execute("DELETE FROM order_stages WHERE id=? AND order_id=?", (stage_id, order_id))
-    # Перенумерация
     stages = conn.execute(
         "SELECT id FROM order_stages WHERE order_id=? ORDER BY n", (order_id,)
     ).fetchall()
@@ -629,3 +648,62 @@ def get_metrics(tech=Depends(get_tech), conn=Depends(db)):
     on_time    = round(completed / total * 100) if total else 0
     return {"total_orders": total, "in_progress": in_prog, "completed": completed,
             "overdue": overdue, "on_time_percent": on_time}
+
+
+# ── ALFA BANK ──────────────────────────────────────────────────────────────────
+
+@app.get("/alfa/status")
+def alfa_status(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    row = conn.execute("SELECT access_token, updated_at FROM alfa_tokens WHERE id=1").fetchone()
+    if row and row["access_token"]:
+        return {"connected": True, "updated_at": row["updated_at"]}
+    return {"connected": False}
+
+@app.post("/alfa/connect")
+def alfa_connect(data: AlfaKeySet, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    if not data.api_key.strip():
+        raise HTTPException(status_code=400, detail="API Key не может быть пустым")
+    conn.execute(
+        "INSERT INTO alfa_tokens (id, access_token, refresh_token, expires_at, updated_at) "
+        "VALUES (1,?,NULL,NULL,?) ON CONFLICT(id) DO UPDATE SET "
+        "access_token=excluded.access_token, updated_at=excluded.updated_at",
+        (data.api_key.strip(), datetime.now().isoformat())
+    )
+    conn.commit()
+    return {"success": True}
+
+@app.get("/alfa/transactions")
+async def alfa_transactions(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    if not _HTTPX:
+        raise HTTPException(status_code=503, detail="httpx не установлен на сервере")
+
+    row = conn.execute("SELECT access_token FROM alfa_tokens WHERE id=1").fetchone()
+    if not row or not row["access_token"]:
+        raise HTTPException(status_code=400, detail="Банк не подключён")
+
+    cert = (ALFA_CERT_PEM, ALFA_CERT_KEY) if ALFA_CERT_PEM and ALFA_CERT_KEY else None
+    async with httpx.AsyncClient(cert=cert, verify=False, timeout=15) as client:
+        resp = await client.get(
+            f"{ALFA_API_BASE}/v1/accounts",
+            headers={"Authorization": f"API_KEY {row['access_token']}"}
+        )
+    if resp.status_code == 401:
+        raise HTTPException(status_code=401, detail="API Key недействителен — проверьте ключ")
+    if resp.status_code != 200:
+        raise HTTPException(status_code=resp.status_code,
+                            detail=f"Ошибка API банка ({resp.status_code}): {resp.text[:300]}")
+    return resp.json()
+
+@app.delete("/alfa/disconnect")
+def alfa_disconnect(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    conn.execute("DELETE FROM alfa_tokens WHERE id=1")
+    conn.commit()
+    return {"success": True}
