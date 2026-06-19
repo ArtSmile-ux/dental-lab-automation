@@ -519,14 +519,7 @@
 
   <!-- ЭКРАН: НАСТРОЙКИ -->
   <div class="screen" id="screen-settings">
-    <div class="sub-nav">
-      <button class="sub-nav-btn active" id="subnav-acts-s" onclick="showSettingsTab('acts')">Акты</button>
-      <button class="sub-nav-btn" id="subnav-prices-s" onclick="showSettingsTab('prices')">Прайс-лист</button>
-      <button class="sub-nav-btn" id="subnav-bank-s" onclick="showSettingsTab('bank')">Банк</button>
-    </div>
-    <div id="settings-acts-content"><div class="loading-text">Загрузка...</div></div>
-    <div id="settings-prices-content" style="display:none"></div>
-    <div id="settings-bank-content" style="display:none"></div>
+    <div id="settings-bank-content"><div class="loading-text">Загрузка...</div></div>
   </div>
   <!-- ЭКРАН: АКТЫ И ЦЕНЫ -->
   <div class="screen" id="screen-acts">
@@ -1876,16 +1869,10 @@ function showSettings() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-settings').classList.add('active');
   setNav('bnav-settings');
-  showSettingsTab('acts');
+  showSettingsTab('bank');
 }
 
 async function showSettingsTab(tab) {
-  ['acts','prices','bank'].forEach(t => {
-    const btn = document.getElementById('subnav-' + t + '-s');
-    const content = document.getElementById('settings-' + t + '-content');
-    if (btn) btn.classList.toggle('active', t === tab);
-    if (content) content.style.display = t === tab ? 'block' : 'none';
-  });
   if (tab === 'acts') {
     const el = document.getElementById('settings-acts-content');
     el.innerHTML = '<div class="loading-text">Загрузка...</div>';
