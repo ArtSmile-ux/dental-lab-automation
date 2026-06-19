@@ -834,12 +834,14 @@ def alfa_disconnect(tech=Depends(get_tech), conn=Depends(db)):
     return {"success": True}
 
 @app.post("/alfa/webhook")
-async def alfa_webhook(request: Request, conn=Depends(db)):
+async def alfa_webhook(request: Request):
     import json as _json
     try:
         body = await request.json()
     except Exception:
         body = {}
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     raw = _json.dumps(body, ensure_ascii=False)
     conn.execute(
         "INSERT INTO alfa_webhooks (event_type, amount, currency, operation_date, counterparty, inn, purpose, account, raw_json) VALUES (?,?,?,?,?,?,?,?,?)",
@@ -856,6 +858,7 @@ async def alfa_webhook(request: Request, conn=Depends(db)):
         )
     )
     conn.commit()
+    conn.close()
     return {"status": "ok"}
 
 @app.get("/alfa/webhooks")
