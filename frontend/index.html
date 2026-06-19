@@ -110,6 +110,16 @@
   .hdr-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; }
   .hdr-badge.urgent { background:rgba(239,68,68,.25); color:#fca5a5; border:1px solid rgba(239,68,68,.3); }
   .hdr-badge.status { background:rgba(59,130,246,.25); color:#93c5fd; border:1px solid rgba(59,130,246,.4); }
+  .lab-hub { display:flex; flex-direction:column; gap:16px; }
+  .lab-section { background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .lab-section-title { background:#f8fafc; padding:10px 16px; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; }
+  .lab-section-items { display:flex; flex-direction:column; }
+  .lab-item { padding:12px 16px; font-size:14px; color:#1e293b; cursor:pointer; border-bottom:1px solid #f8fafc; display:flex; align-items:center; gap:8px; transition:background .15s; }
+  .lab-item:last-child { border-bottom:none; }
+  .lab-item:not(.disabled):hover { background:#f0f7ff; color:#2563eb; }
+  .lab-item:not(.disabled)::before { content:'★'; font-size:11px; color:#f59e0b; }
+  .lab-item.disabled { color:#cbd5e1; cursor:default; }
+  .lab-item.disabled::before { content:'○'; font-size:11px; color:#e2e8f0; }
   .order-actions { display:flex; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid #e2e8f0; margin-bottom:12px; }
   .btn-action { padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:12px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap; }
   .btn-action:hover { background:#f8fafc; }
@@ -1593,31 +1603,79 @@ async function showLab() {
 
 async function renderLab() {
   const content = document.getElementById('lab-content');
+  const isAdmin = currentUser && currentUser.role === 'admin';
+
+  const section = (title, items) => `
+    <div class="lab-section">
+      <div class="lab-section-title">${title}</div>
+      <div class="lab-section-items">
+        ${items.map(([label, fn, available]) => available
+          ? `<div class="lab-item" onclick="${fn}">${label}</div>`
+          : `<div class="lab-item disabled">${label}</div>`
+        ).join('')}
+      </div>
+    </div>`;
+
+  content.innerHTML = `
+    <div class="lab-hub">
+      ${section('Документы', [
+        ['Заказы на производство', 'showOrders()', true],
+        ['Акты выполненных работ', "showSettings();showSettingsTab('acts')", isAdmin],
+        ['Установка цен номенклатуры', "showSettings();showSettingsTab('prices')", isAdmin],
+        ['Этапы производства', '', false],
+        ['Встречи', '', false],
+        ['Зарплата техников', '', false],
+        ['Приходные накладные', '', false],
+        ['Расходные накладные', '', false],
+      ])}
+      ${section('Справочники', [
+        ['Клиники', 'showClinics()', isAdmin],
+        ['Номенклатура', "showSettings();showSettingsTab('prices')", isAdmin],
+        ['Врачи', '', false],
+        ['Техники', '', false],
+        ['Имплантаты', '', false],
+        ['Цвет зубов', '', false],
+        ['Материалы', '', false],
+        ['Поставщики', '', false],
+      ])}
+      ${section('Отчёты', [
+        ['Дашборд', 'showDashboard()', true],
+        ['Обороты по клиникам', '', false],
+        ['Работы техников', '', false],
+        ['Планерка', '', false],
+        ['Себестоимость', '', false],
+        ['Материалы расход по заказам', '', false],
+      ])}
+      ${section('Сервис', [
+        ['Настройки', 'showSettings()', isAdmin],
+        ['Банк', "showSettings();showSettingsTab('bank')", isAdmin],
+        ['Telegram', '', false],
+      ])}
+    </div>`;
+}
+
+function showClinics() {
+  const content = document.getElementById('lab-content');
   content.innerHTML = '<div class="loading-text">Загрузка...</div>';
-  try {
-    const r = await fetch(`${API}/clinics`, {headers:{'x-pin': localStorage.getItem('pin')}});
-    const data = await r.json();
-    clinicsList = data.clinics;
-    const isAdmin = currentUser && currentUser.role === 'admin';
-    const addBtn = isAdmin ? `<button class="btn-primary" style="margin-bottom:16px;width:100%" onclick="showClinicModal()">+ Добавить клинику</button>` : '';
-    if (!clinicsList.length) {
-      content.innerHTML = `<div class="section-title">Клиники</div>${addBtn}<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg><div>Нет клиник</div></div>`;
-      return;
-    }
-    const cards = clinicsList.map(c => `
-      <div class="detail-card" style="margin-bottom:10px;cursor:${isAdmin ? 'pointer' : 'default'}" ${isAdmin ? `onclick="showClinicModal('${c.id}')"` : ''}>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div style="font-weight:700;font-size:15px;color:#1e293b">${c.name}</div>
-          ${c.city ? `<span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:20px">${c.city}</span>` : ''}
-        </div>
-        ${c.contact_name ? `<div style="font-size:13px;color:#64748b;margin-top:6px">Контакт: ${c.contact_name}</div>` : ''}
-        ${c.phone ? `<div style="font-size:13px;color:#64748b">Телефон: <a href="tel:${c.phone}" style="color:#2563eb">${c.phone}</a></div>` : ''}
-        ${c.notes ? `<div style="font-size:12px;color:#94a3b8;margin-top:4px">${c.notes}</div>` : ''}
-      </div>`).join('');
-    content.innerHTML = `<div class="section-title">Клиники (${clinicsList.length})</div>${addBtn}${cards}`;
-  } catch {
-    content.innerHTML = '<div class="loading-text">Ошибка загрузки</div>';
-  }
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const backBtn = `<button onclick="renderLab()" style="background:none;border:none;color:#2563eb;font-size:14px;cursor:pointer;padding:0 0 12px;display:block">← Назад</button>`;
+  fetch(`${API}/clinics`, {headers:{'x-pin': localStorage.getItem('pin')}})
+    .then(r => r.json())
+    .then(data => {
+      clinicsList = data.clinics;
+      const addBtn = isAdmin ? `<button class="btn-primary" style="margin-bottom:12px;width:100%" onclick="showClinicModal()">+ Добавить клинику</button>` : '';
+      const cards = clinicsList.map(c => `
+        <div class="detail-card" style="margin-bottom:10px;cursor:${isAdmin?'pointer':'default'}" ${isAdmin?`onclick="showClinicModal('${c.id}')"`:''}>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="font-weight:700;font-size:15px">${c.name}</div>
+            ${c.city?`<span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:20px">${c.city}</span>`:''}
+          </div>
+          ${c.contact_name?`<div style="font-size:13px;color:#64748b;margin-top:4px">Контакт: ${c.contact_name}</div>`:''}
+          ${c.phone?`<div style="font-size:13px;color:#64748b">Телефон: <a href="tel:${c.phone}" style="color:#2563eb">${c.phone}</a></div>`:''}
+        </div>`).join('');
+      content.innerHTML = `${backBtn}<div class="section-title">Клиники (${clinicsList.length})</div>${addBtn}${cards||'<div style="color:#94a3b8;font-size:14px">Клиники не добавлены</div>'}`;
+    })
+    .catch(() => { content.innerHTML = backBtn + '<div class="loading-text">Ошибка загрузки</div>'; });
 }
 
 function showClinicModal(clinicId) {
