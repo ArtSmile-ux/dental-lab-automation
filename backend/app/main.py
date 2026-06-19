@@ -140,6 +140,19 @@ def init_db():
         expires_at    TEXT,
         updated_at    TEXT
     );
+    CREATE TABLE IF NOT EXISTS alfa_webhooks (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        received_at   TEXT DEFAULT (datetime('now')),
+        event_type    TEXT DEFAULT '',
+        amount        REAL DEFAULT 0,
+        currency      TEXT DEFAULT 'RUB',
+        operation_date TEXT DEFAULT '',
+        counterparty  TEXT DEFAULT '',
+        inn           TEXT DEFAULT '',
+        purpose       TEXT DEFAULT '',
+        account       TEXT DEFAULT '',
+        raw_json      TEXT DEFAULT ''
+    );
     CREATE TABLE IF NOT EXISTS clinics (
         id           TEXT PRIMARY KEY,
         name         TEXT NOT NULL UNIQUE,
@@ -819,3 +832,35 @@ def alfa_disconnect(tech=Depends(get_tech), conn=Depends(db)):
     conn.execute("DELETE FROM alfa_tokens WHERE id=1")
     conn.commit()
     return {"success": True}
+
+@app.post("/alfa/webhook")
+async def alfa_webhook(request: Request, conn=Depends(db)):
+    import json as _json
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    raw = _json.dumps(body, ensure_ascii=False)
+    conn.execute(
+        "INSERT INTO alfa_webhooks (event_type, amount, currency, operation_date, counterparty, inn, purpose, account, raw_json) VALUES (?,?,?,?,?,?,?,?,?)",
+        (
+            body.get("eventType") or body.get("type", ""),
+            float(body.get("amount", {}).get("value", 0) if isinstance(body.get("amount"), dict) else body.get("amount", 0)),
+            body.get("amount", {}).get("currency", "RUB") if isinstance(body.get("amount"), dict) else "RUB",
+            body.get("operationDate") or body.get("date", ""),
+            body.get("counterpartyName") or body.get("payer", {}).get("name", "") if isinstance(body.get("payer"), dict) else body.get("counterpartyName", ""),
+            body.get("counterpartyInn") or "",
+            body.get("paymentPurpose") or body.get("purpose", ""),
+            body.get("accountNumber") or "",
+            raw
+        )
+    )
+    conn.commit()
+    return {"status": "ok"}
+
+@app.get("/alfa/webhooks")
+def get_webhooks(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403)
+    rows = conn.execute("SELECT * FROM alfa_webhooks ORDER BY received_at DESC LIMIT 100").fetchall()
+    return {"webhooks": [dict(r) for r in rows]}
