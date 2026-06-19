@@ -13,7 +13,7 @@
   @media (min-width:768px) {
     body, .bottom-nav, #act-print-overlay, .print-actions { max-width:100% !important; }
     #screen-orders, #screen-detail, #screen-acts, #screen-hub,
-    #screen-clinics, #screen-clinic-detail, #screen-doctors, #screen-bank { padding: 0 40px; }
+    #screen-clinics, #screen-clinic-detail, #screen-doctors, #screen-bank, #screen-lab { padding: 0 40px; }
     .orders-list { display:block; }
     .order-card { margin-bottom:8px; }
     .section-title { grid-column: 1/-1; }
@@ -92,7 +92,7 @@
   .badge.gray { background:#f1f5f9; color:#64748b; }
 
   /* ── ДЕТАЛИ ЗАКАЗА ── */
-  .back-btn { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:14px; font-weight:600; margin-bottom:16px; background:none; border:none; cursor:pointer; padding:0; }
+  .back-btn { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:14px; font-weight:600; margin-bottom:0; background:none; border:none; cursor:pointer; padding:12px 0 10px; }
   .detail-card { background:#fff; border-radius:16px; padding:18px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
   .detail-card h3 { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; }
   .detail-row { display:flex; justify-content:space-between; align-items:flex-start; padding:9px 0; border-bottom:1px solid #f1f5f9; font-size:14px; }
@@ -101,6 +101,41 @@
   .dv { font-weight:600; text-align:right; max-width:60%; }
   .dv.red { color:#dc2626; }
   .status-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  /* ── НОВЫЙ ДИЗАЙН ДЕТАЛЕЙ ── */
+  .order-hdr { background:#1e293b; color:#fff; padding:16px; margin:-16px -16px 0; border-radius:0; }
+  .order-hdr-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+  .order-hdr-num { font-size:17px; font-weight:800; }
+  .order-hdr-date { font-size:12px; color:#94a3b8; margin-top:2px; }
+  .order-hdr-badges { display:flex; gap:6px; align-items:center; }
+  .hdr-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; }
+  .hdr-badge.urgent { background:rgba(239,68,68,.2); color:#fca5a5; }
+  .hdr-badge.status { background:rgba(59,130,246,.25); color:#93c5fd; border:1px solid rgba(59,130,246,.4); }
+  .order-actions { display:flex; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid #e2e8f0; margin-bottom:12px; }
+  .btn-action { padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:12px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap; }
+  .btn-action:hover { background:#f8fafc; }
+  .btn-action.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
+  .btn-action.green { background:#16a34a; color:#fff; border-color:#16a34a; }
+  .btn-action.purple { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+  .order-fields-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:12px; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .order-field { padding:10px 14px; border-bottom:1px solid #f1f5f9; display:flex; flex-direction:column; gap:2px; }
+  .order-field:nth-child(odd) { border-right:1px solid #f1f5f9; }
+  .order-field-lbl { font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+  .order-field-val { font-size:14px; font-weight:600; color:#1e293b; display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:22px; }
+  .order-field-val .red { color:#dc2626; }
+  .btn-change { font-size:11px; color:#2563eb; background:none; border:none; cursor:pointer; padding:0; white-space:nowrap; flex-shrink:0; }
+  .status-pipeline { display:flex; background:#fff; border-radius:16px; overflow:hidden; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .pipe-btn { flex:1; padding:10px 4px; border:none; background:none; font-size:11px; font-weight:600; color:#94a3b8; cursor:pointer; text-align:center; border-right:1px solid #f1f5f9; transition:all .15s; }
+  .pipe-btn:last-child { border-right:none; }
+  .pipe-btn.active { background:#2563eb; color:#fff; }
+  .pipe-btn:hover:not(.active) { background:#f1f5f9; color:#475569; }
+  .items-hdr { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+  .items-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .items-table th { padding:8px 6px; text-align:left; font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; border-bottom:2px solid #f1f5f9; }
+  .items-table td { padding:9px 6px; border-bottom:1px solid #f8fafc; color:#334155; vertical-align:middle; }
+  .items-table tr:last-child td { border-bottom:none; }
+  .td-del { color:#ef4444; background:none; border:none; cursor:pointer; font-size:16px; padding:0 4px; }
+  .td-check { width:22px; height:22px; border-radius:50%; border:2px solid #cbd5e1; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .td-check.done { background:#22c55e; border-color:#22c55e; color:#fff; font-size:12px; }
   .status-btn { flex:1; min-width:70px; padding:10px 4px; border-radius:10px; border:2px solid #e2e8f0; background:#f8fafc; font-size:11px; font-weight:700; color:#64748b; cursor:pointer; text-align:center; transition:all .15s; }
   .status-btn.active { border-color:#2563eb; background:#eff6ff; color:#2563eb; }
   .status-btn:active { transform:scale(.96); }
@@ -369,7 +404,8 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Клиника <span style="color:#ef4444">*</span></label>
-          <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" autocomplete="off">
+          <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" list="clinic-datalist" autocomplete="off">
+          <datalist id="clinic-datalist"></datalist>
         </div>
         <div class="form-group">
           <label class="form-label">Врач <span style="color:#ef4444">*</span></label>
@@ -460,6 +496,28 @@
   <div class="screen" id="screen-bank">
     <div id="bank-content"><div class="loading-text">Загрузка...</div></div>
   </div>
+
+  <!-- ЭКРАН: ЛАБОРАТОРИЯ -->
+  <div class="screen" id="screen-lab">
+    <div id="lab-content"><div class="loading-text">Загрузка...</div></div>
+  </div>
+
+  <!-- ЭКРАН: СООБЩЕНИЯ -->
+  <div class="screen" id="screen-messages">
+    <div id="messages-content"><div class="loading-text">Загрузка...</div></div>
+  </div>
+
+  <!-- ЭКРАН: НАСТРОЙКИ -->
+  <div class="screen" id="screen-settings">
+    <div class="sub-nav">
+      <button class="sub-nav-btn active" id="subnav-acts-s" onclick="showSettingsTab('acts')">Акты</button>
+      <button class="sub-nav-btn" id="subnav-prices-s" onclick="showSettingsTab('prices')">Прайс-лист</button>
+      <button class="sub-nav-btn" id="subnav-bank-s" onclick="showSettingsTab('bank')">Банк</button>
+    </div>
+    <div id="settings-acts-content"><div class="loading-text">Загрузка...</div></div>
+    <div id="settings-prices-content" style="display:none"></div>
+    <div id="settings-bank-content" style="display:none"></div>
+  </div>
   <!-- ЭКРАН: АКТЫ И ЦЕНЫ -->
   <div class="screen" id="screen-acts">
     <div class="sub-nav">
@@ -471,6 +529,10 @@
   </div>
 
   <div class="bottom-nav" id="bottom-nav">
+    <button class="bnav-btn" id="bnav-lab" onclick="showLab()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      Лаборатория
+    </button>
     <button class="bnav-btn active" id="bnav-orders" onclick="showOrders()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
       Заказы
@@ -481,17 +543,17 @@
       </div>
       Заказ
     </button>
-    <button class="bnav-btn" id="bnav-acts" onclick="showActs()" style="display:none">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      Акты
+    <button class="bnav-btn" id="bnav-msgs" onclick="showMessages()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Сообщения
     </button>
     <button class="bnav-btn" id="bnav-dash" onclick="showDashboard()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       Дашборд
     </button>
-    <button class="bnav-btn" id="bnav-bank" onclick="showBank()" style="display:none">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-      Банк
+    <button class="bnav-btn" id="bnav-settings" onclick="showSettings()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Настройки
     </button>
   </div>
 </div>
@@ -519,6 +581,7 @@ let filterTech = '';
 let filterClinic = '';
 let filterStatus = '';
 let acts = [];
+let clinicsList = [];
 
 // ── УТИЛИТЫ ──────────────────────────────────────────────────────────────────
 function fmt(iso) {
@@ -566,7 +629,7 @@ function showToast(msg, ms=2200) {
   setTimeout(() => t.classList.remove('show'), ms);
 }
 function setNav(active) {
-  ['bnav-orders','bnav-create','bnav-acts','bnav-dash'].forEach(id => {
+  ['bnav-orders','bnav-create','bnav-acts','bnav-dash','bnav-bank','bnav-lab','bnav-msgs','bnav-settings'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
@@ -619,9 +682,8 @@ function startApp() {
   loadNomenclature();
   if (currentUser.role === 'admin') {
     document.getElementById('bnav-create').style.display = 'flex';
-    document.getElementById('bnav-acts').style.display = 'flex';
-    document.getElementById('bnav-bank').style.display = 'flex';
     loadTechniciansForForm().then(() => loadOrders());
+    loadClinicsForForm();
   } else {
     loadOrders();
   }
@@ -796,228 +858,213 @@ function showDetail(id) {
 
 function renderDetail(o) {
   const u = urgency(o.deadline);
-
-  // ── HERO ──
-  const heroSection = `
-  <div class="order-hero">
-    <div class="hero-top">
-      <div>
-        <div class="hero-order-num">Заказ ${o.id}</div>
-        <div class="hero-created">${fmtDate(o.created_at)}</div>
-      </div>
-      ${statusBadge(o.status)}
-    </div>
-    <div class="hero-patient">${o.patient_name}</div>
-    <div class="hero-meta">
-      <span class="hero-appt">Приём: <strong>${fmt(o.appointment_at)}</strong></span>
-      ${u === 'red' ? `<span class="badge red" style="font-size:11px">⚠ Срочно</span>` : u === 'yellow' ? `<span class="badge yellow" style="font-size:11px">⏰ Завтра</span>` : `<span class="badge green" style="font-size:11px">✓ В срок</span>`}
-    </div>
-  </div>`;
-
-  // ── QUICK BAR ──
-  const colorMatch = o.description && o.description.match(/\b[A-D]\d\b/);
-  const quickBar = `
-  <div class="quick-bar">
-    <div class="qb-item">
-      <div class="qb-val">${o.tooth_color || (colorMatch ? colorMatch[0] : '—')}</div>
-      <div class="qb-lbl">Цвет</div>
-    </div>
-    <div class="qb-item">
-      <div class="qb-val" style="font-size:13px">${o.preferred_technician || o.technician_name || '—'}</div>
-      <div class="qb-lbl">Техник</div>
-    </div>
-    <div class="qb-item">
-      <div class="qb-val" style="font-size:${o.total ? '13px' : '18px'}">${o.total ? Number(o.total).toLocaleString('ru') + ' ₽' : o.units + ' ед.'}</div>
-      <div class="qb-lbl">${o.total ? 'Сумма' : 'Единиц'}</div>
-    </div>
-  </div>`;
-
-  // ── КЛИНИКА ──
-  const disc = o.discount || 0;
-  const discountedTotal = o.total && disc > 0 ? o.total * (1 - disc / 100) : o.total;
   const isAdmin = currentUser && currentUser.role === 'admin';
-  const clinicSection = `
-  <div class="detail-card">
-    <h3>Клиника и врач</h3>
-    <div class="detail-row"><span class="dl">🏥 Клиника</span><span class="dv">${o.clinic_name}</span></div>
-    <div class="detail-row"><span class="dl">👨‍⚕️ Врач</span><span class="dv">${o.doctor_name}</span></div>
-    <div class="detail-row"><span class="dl">📅 Сдать до</span><span class="dv ${u === 'red' ? 'red' : ''}">${fmt(o.deadline)}</span></div>
-    ${o.total ? `<div class="detail-row">
-      <span class="dl">💰 Сумма</span>
-      <span class="dv">
-        ${disc > 0 ? `<span style="text-decoration:line-through;color:#94a3b8;font-size:12px;margin-right:4px">${Number(o.total).toLocaleString('ru')} ₽</span>${Number(discountedTotal).toLocaleString('ru')} ₽` : `${Number(o.total).toLocaleString('ru')} ₽`}
-      </span>
-    </div>` : ''}
-    <div class="detail-row">
-      <span class="dl">🏷 Скидка</span>
-      <div class="discount-wrap">
-        ${isAdmin ? `
-        <input class="discount-input" id="disc-${o.id}" type="number" min="0" max="100" step="1"
-               value="${disc}" onkeydown="if(event.key==='Enter')saveDiscount('${o.id}')"
-               onblur="saveDiscount('${o.id}')">
-        <span class="discount-pct">%</span>
-        ${disc > 0 ? `<span class="discount-badge">−${disc}%</span>` : `<span style="font-size:12px;color:#94a3b8">Не предоставляется</span>`}
-        ` : `<span class="dv">${disc > 0 ? disc + '%' : 'Не предоставляется'}</span>`}
+  const disc = o.discount || 0;
+  const discountedTotal = o.total && disc > 0 ? Math.round(o.total * (1 - disc / 100)) : o.total;
+
+  // ── ХЕДЕР ──
+  const urgBadge = u === 'red' ? `<span class="hdr-badge urgent">⚠ Срочно</span>` : u === 'yellow' ? `<span class="hdr-badge urgent">⏰ Завтра</span>` : '';
+  const header = `
+  <div class="order-hdr">
+    <div class="order-hdr-top">
+      <div>
+        <div class="order-hdr-num">Наряд-заказ № ${o.id}</div>
+        <div class="order-hdr-date">от ${fmtDate(o.created_at)}</div>
+      </div>
+      <div class="order-hdr-badges">
+        ${urgBadge}
+        <span class="hdr-badge status">${statusLabel(o.status)}</span>
       </div>
     </div>
-    ${o.payment_status ? `<div class="detail-row"><span class="dl">💳 Оплата</span><span class="dv">${o.payment_status}</span></div>` : ''}
-    ${o.description ? `<div class="detail-row"><span class="dl">📝 Примечание</span><span class="dv" style="font-size:12px;color:#475569">${o.description}</span></div>` : ''}
+  </div>`;
+
+  // ── КНОПКИ ДЕЙСТВИЙ ──
+  const actions = `
+  <div class="order-actions">
+    <button class="btn-action primary" onclick="changeStatus('${o.id}','сдано')">Провести и закрыть</button>
+    <button class="btn-action" onclick="showDetail('${o.id}')">Записать</button>
+    <button class="btn-action" onclick="printNZ('${o.id}')">🖨 Печать НЗ</button>
+    ${isAdmin ? `<button class="btn-action green" onclick="createAct('${o.id}')">Выписать акт</button>` : ''}
+    ${isAdmin ? `<button class="btn-action purple" onclick="autoDistribute('${o.id}')">💎 Авто-распределить</button>` : ''}
+  </div>`;
+
+  // ── ПОЛЯ ──
+  const chg = (field, label, val) => isAdmin
+    ? `<button class="btn-change" onclick="editField('${o.id}','${field}','${label}','${(val||'').replace(/'/g,"\\'")}')">Изменить</button>`
+    : '';
+  const apptVal = o.appointment_at ? fmtShort(o.appointment_at) : '—';
+  const apptColor = o.appointment_at && new Date(o.appointment_at) < new Date() ? ' red' : '';
+
+  const fieldsGrid = `
+  <div class="order-fields-grid">
+    <div class="order-field">
+      <div class="order-field-lbl">Пациент</div>
+      <div class="order-field-val">${o.patient_name||'—'} ${chg('patient_name','Пациент',o.patient_name)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Керамист</div>
+      <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Керамист',o.ceramist)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Клиника</div>
+      <div class="order-field-val">${o.clinic_name||'—'} ${chg('clinic_name','Клиника',o.clinic_name)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Моделировщик</div>
+      <div class="order-field-val">${o.modeler||'—'} ${chg('modeler','Моделировщик',o.modeler)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Врач</div>
+      <div class="order-field-val">${o.doctor_name||'—'} ${chg('doctor_name','Врач',o.doctor_name)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Дата приёма</div>
+      <div class="order-field-val"><span class="${apptColor}">${apptVal}</span> ${chg('appointment_at','Дата приёма',o.appointment_at)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Цвет зубов</div>
+      <div class="order-field-val">${o.tooth_color||'—'} ${chg('tooth_color','Цвет зубов',o.tooth_color)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Скидка</div>
+      <div class="order-field-val">
+        ${isAdmin ? `<input class="discount-input" id="disc-${o.id}" type="number" min="0" max="100" value="${disc}" style="width:42px;padding:2px 4px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px" onblur="saveDiscount('${o.id}')"> %` : disc + ' %'}
+        <span style="font-size:11px;color:#94a3b8">${disc > 0 ? '−'+disc+'%' : 'Не предоставляется'}</span>
+      </div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Система импл.</div>
+      <div class="order-field-val">${o.implant_system||'—'} ${chg('implant_system','Система импл.',o.implant_system)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Общая сумма</div>
+      <div class="order-field-val">${o.total ? Number(discountedTotal).toLocaleString('ru') + ' ₽' : '—'}</div>
+    </div>
+  </div>`;
+
+  // ── СТАТУС-ПАЙПЛАЙН ──
+  const pipes = [
+    ['новый','Новый'],['в_работе','В работе'],['на_проверке','На проверке'],
+    ['передать_на_доставку','Передать на доставку'],['сдано','Сдано']
+  ];
+  const pipeline = `
+  <div class="status-pipeline">
+    ${pipes.map(([s,l]) => `<button class="pipe-btn${o.status===s?' active':''}" onclick="changeStatus('${o.id}','${s}')">${l}</button>`).join('')}
   </div>`;
 
   // ── ИЗДЕЛИЯ ──
+  const items = o.items || [];
   const nomOpts = nomenclature.map(n =>
     `<option value="${n.id}">${n.article} — ${n.name} (${Number(n.price).toLocaleString('ru')} ₽)</option>`
   ).join('');
-  const items = o.items || [];
-  const itemsTotal = items.reduce((s, it) => s + (it.total || 0), 0);
-  const itemRows = items.map(item => `
-  <div class="item-row" id="irow-${item.id}">
-    <span class="item-art">${item.article || '—'}</span>
-    <span class="item-name">${item.name}</span>
-    <input class="item-qty-input" type="number" min="1" max="99" value="${item.qty}"
-           onchange="updateItemQty('${o.id}',${item.id},this.value)"
-           ${isAdmin ? '' : 'readonly style="border:none;background:none;pointer-events:none"'}>
-    <span class="item-total">${item.total ? Number(item.total).toLocaleString('ru') + ' ₽' : '—'}</span>
-    <div class="${item.is_delivered ? 'item-dot-ok' : 'item-dot-no'}"
-         onclick="toggleDelivered('${o.id}',${item.id})" title="${item.is_delivered ? 'Сдано' : 'Отметить как сдано'}">
-      ${item.is_delivered ? '✓' : ''}
-    </div>
-    ${isAdmin ? `<button class="item-del" onclick="deleteItem('${o.id}',${item.id})" title="Удалить">×</button>` : ''}
-  </div>`).join('');
+  const itemRows = items.map(it => `
+    <tr>
+      <td style="color:#94a3b8;font-size:11px">${fmtDate(o.created_at)}</td>
+      <td style="color:#94a3b8">${it.article||'—'}</td>
+      <td style="font-weight:600">${it.name}</td>
+      <td style="color:#64748b">${o.teeth||'—'}</td>
+      <td><input class="item-qty-input" type="number" min="1" max="99" value="${it.qty}" style="width:44px;padding:3px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-size:13px" onchange="updateItemQty('${o.id}',${it.id},this.value)" ${isAdmin?'':'readonly'}></td>
+      <td>${it.price ? Number(it.price).toLocaleString('ru')+' ₽' : '—'}</td>
+      <td>${it.total ? Number(it.total).toLocaleString('ru')+' ₽' : '—'}</td>
+      <td><span class="td-check${it.is_delivered?' done':''}" onclick="toggleDelivered('${o.id}',${it.id})">${it.is_delivered?'✓':''}</span></td>
+      ${isAdmin ? `<td><button class="td-del" onclick="deleteItem('${o.id}',${it.id})">×</button></td>` : '<td></td>'}
+    </tr>`).join('');
 
-  const addForm = isAdmin ? `
-  <div id="add-item-wrap-${o.id}" style="display:none">
-    <div class="add-item-form">
-      <select class="add-item-select" id="nom-sel-${o.id}">
-        <option value="">— Выберите изделие —</option>
-        ${nomOpts}
-      </select>
-      <input class="add-item-qty" id="nom-qty-${o.id}" type="number" min="1" max="99" value="1">
-      <button class="add-item-btn" onclick="addItem('${o.id}')">Добавить</button>
-    </div>
-  </div>
-  <button class="items-add-toggle" onclick="toggleAddForm('${o.id}')">
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-    Добавить изделие
-  </button>` : '';
+  const addItemRow = isAdmin ? `
+  <tr id="add-item-wrap-${o.id}" style="display:none">
+    <td colspan="9" style="padding:8px 0">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="add-item-select" id="nom-sel-${o.id}" style="flex:1;min-width:180px">
+          <option value="">— Выберите изделие —</option>${nomOpts}
+        </select>
+        <input class="add-item-qty" id="nom-qty-${o.id}" type="number" min="1" max="99" value="1" style="width:56px;padding:6px;border:1px solid #e2e8f0;border-radius:8px">
+        <button class="add-item-btn" onclick="addItem('${o.id}')">Добавить</button>
+      </div>
+    </td>
+  </tr>` : '';
 
   const itemsSection = `
   <div class="detail-card">
-    <h3>Заказанные изделия</h3>
-    ${itemRows || `<div style="color:#94a3b8;font-size:13px;padding:8px 0">${o.work_type} · ${o.units} ед.${o.teeth ? ' · зубы ' + o.teeth : ''}</div>`}
-    ${items.length > 1 ? `<div class="items-total-row"><span class="items-total-lbl">Итого изделий</span><span class="items-total-val">${Number(itemsTotal).toLocaleString('ru')} ₽</span></div>` : ''}
-    ${addForm}
+    <div class="items-hdr">Заказанные изделия</div>
+    ${isAdmin ? `<button class="items-add-toggle" onclick="toggleAddForm('${o.id}')">+ Добавить изделие</button>` : ''}
+    <div style="overflow-x:auto;margin-top:10px">
+      <table class="items-table">
+        <thead><tr>
+          <th>ДАТА РЕГ.</th><th>АРТ.</th><th>ПОЗИЦИЯ ПРАЙСА</th>
+          <th>ЗУБЫ</th><th>КОЛ.</th><th>ЦЕНА</th><th>СУММА</th><th>СДАНО</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${itemRows || `<tr><td colspan="9" style="color:#94a3b8;padding:12px 0">${o.work_type} · ${o.units} ед.${o.teeth?' · '+o.teeth:''}</td></tr>`}
+          ${addItemRow}
+        </tbody>
+      </table>
+    </div>
   </div>`;
 
   // ── ЭТАПЫ ──
-  const stageItems = (o.stages || []).map(s => {
-    let cls = 'pending', dot = s.n;
-    if (s.actual_date) { cls = 'done'; dot = '✓'; }
-    else if (s.transferred_at || s.accepted_at) { cls = 'active'; }
+  const stageItems = (o.stages||[]).map(s => {
+    let cls='pending', dot=s.n;
+    if (s.actual_date){cls='done';dot='✓';}
+    else if (s.transferred_at||s.accepted_at){cls='active';}
     const dates = s.transferred_at
-      ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date ? `<br>Выполнено: ${fmtShort(s.actual_date)}` : '<br><em>Выполняется...</em>'}`
-      : `${s.planned_date ? 'План: ' + fmtDate(s.planned_date) : '<em style="color:#cbd5e1">Ожидает очереди</em>'}`;
-    const actions = isAdmin ? `
+      ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date?`<br>Выполнено: ${fmtShort(s.actual_date)}`:'<br><em>Выполняется...</em>'}`
+      : `${s.planned_date?'План: '+fmtDate(s.planned_date):'<em style="color:#cbd5e1">Ожидает</em>'}`;
+    const acts2 = isAdmin ? `
     <div class="stage-actions">
-      ${!s.transferred_at && !s.actual_date ? `<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ Передать в работу</button>` : ''}
-      ${s.transferred_at && !s.actual_date ? `<button class="stage-btn complete" onclick="completeStage('${o.id}',${s.id})">✓ Завершить</button>` : ''}
+      ${!s.transferred_at&&!s.actual_date?`<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ В работу</button>`:''}
+      ${s.transferred_at&&!s.actual_date?`<button class="stage-btn complete" onclick="completeStage('${o.id}',${s.id})">✓ Завершить</button>`:''}
       <button class="stage-btn del-stage" onclick="deleteStage('${o.id}',${s.id})">× Удалить</button>
     </div>` : '';
-    return `
-    <div class="stage-item ${cls}">
-      <div class="stage-dot">${dot}</div>
-      <div class="stage-body">
-        <div class="stage-op">${s.operation}</div>
-        <div class="stage-tech">👤 ${s.technician}</div>
-        <div class="stage-dates">${dates}</div>
-        <span class="stage-qty-tag">× ${s.qty} ед.</span>
-        ${s.defect_comment ? `<div class="stage-defect">⚠ ${s.defect_comment}</div>` : ''}
-        ${actions}
-      </div>
-    </div>`;
+    return `<div class="stage-item ${cls}"><div class="stage-dot">${dot}</div><div class="stage-body">
+      <div class="stage-op">${s.operation}</div><div class="stage-tech">👤 ${s.technician}</div>
+      <div class="stage-dates">${dates}</div><span class="stage-qty-tag">× ${s.qty} ед.</span>${acts2}
+    </div></div>`;
   }).join('');
 
-  const techOpts = techniciansList.map(t =>
-    `<option value="${t.id}">${t.name}</option>`).join('');
-
+  const techOpts = techniciansList.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   const addStageForm = isAdmin ? `
-  <button class="stage-toggle-btn" onclick="toggleAddStageForm('${o.id}')">
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-    Добавить этап
-  </button>
+  <button class="stage-toggle-btn" onclick="toggleAddStageForm('${o.id}')">+ Добавить этап</button>
   <div class="add-stage-form" id="add-stage-wrap-${o.id}">
-    <input class="stage-form-input" id="stage-op-${o.id}" list="stage-ops-${o.id}" placeholder="Операция (напр. Моделирование)">
-    <datalist id="stage-ops-${o.id}">
-      <option value="Моделирование">
-      <option value="Гипсовка">
-      <option value="Гравировка">
-      <option value="Нанесение керамики">
-      <option value="Обжиг">
-      <option value="Глазуровка">
-      <option value="Сборка">
-      <option value="Примерка">
-      <option value="Полировка">
-    </datalist>
+    <input class="stage-form-input" id="stage-op-${o.id}" list="stage-ops-${o.id}" placeholder="Операция">
+    <datalist id="stage-ops-${o.id}"><option value="Моделирование"><option value="Гипсовка"><option value="Гравировка"><option value="Нанесение керамики"><option value="Обжиг"><option value="Глазуровка"><option value="Полировка"></datalist>
     <div class="stage-form-row">
-      <select class="stage-form-input" id="stage-tech-${o.id}">
-        <option value="">— Техник —</option>
-        ${techOpts}
-      </select>
-      <input class="stage-form-input" id="stage-qty-${o.id}" type="number" min="1" max="99" value="1" placeholder="Кол-во">
+      <select class="stage-form-input" id="stage-tech-${o.id}"><option value="">— Техник —</option>${techOpts}</select>
+      <input class="stage-form-input" id="stage-qty-${o.id}" type="number" min="1" max="99" value="1">
     </div>
-    <input class="stage-form-input" id="stage-date-${o.id}" type="date" placeholder="Плановая дата">
+    <input class="stage-form-input" id="stage-date-${o.id}" type="date">
     <button class="stage-save-btn" onclick="addStage('${o.id}')">Добавить этап</button>
   </div>` : '';
 
   const stagesSection = `
   <div class="detail-card">
     <h3>Этапы производства</h3>
-    ${stageItems ? `<div class="stages-list">${stageItems}</div>` : `<div style="color:#94a3b8;font-size:13px;padding:8px 0">Этапы не заданы</div>`}
+    ${stageItems?`<div class="stages-list">${stageItems}</div>`:`<div style="color:#94a3b8;font-size:13px;padding:8px 0">Этапы не заданы</div>`}
     ${addStageForm}
   </div>`;
 
-  // ── СТАТУС ──
-  const statuses = ['новый','в_работе','на_проверке','готово','сдано'];
-  const statusBtns = statuses.map(s =>
-    `<button class="status-btn ${o.status === s ? 'active' : ''}" onclick="changeStatus('${o.id}','${s}')">${statusLabel(s)}</button>`
-  ).join('');
-  const actBtn = isAdmin ? `
-  <button class="act-create-btn" onclick="createAct('${o.id}')">
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-    Выписать акт
-  </button>` : '';
-  const statusSection = `<div class="detail-card"><h3>Статус работы</h3><div class="status-row">${statusBtns}</div>${actBtn}</div>`;
-
-  // ── СООБЩЕНИЯ ──
-  const msgs = (o.messages||[]).map(m => `
+  // ── КОММЕНТАРИИ ──
+  const comments = (o.comments||[]).map(c=>`
     <div class="msg-item">
-      <div class="msg-meta"><span class="msg-from">${m.from}</span><span class="msg-time">${m.time ? m.time.slice(11,16) : ''}</span></div>
-      <div class="msg-text">${m.text}</div>
-      ${m.has_photo ? `<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:110px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin:8px 0">📷 Фото от врача</div>` : ''}
-      <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:4px;margin-top:6px"><span style="background:#29b6f6;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800">TG</span> Из Telegram</div>
-    </div>`).join('');
-
-  const comments = (o.comments||[]).map(c => `
-    <div class="msg-item">
-      <div class="msg-meta"><span class="msg-from">${c.author}</span><span class="msg-time">${c.created_at ? c.created_at.slice(11,16) : ''}</span></div>
+      <div class="msg-meta"><span class="msg-from">${c.author}</span><span class="msg-time">${c.created_at?c.created_at.slice(11,16):''}</span></div>
       <div class="msg-text">${c.text}</div>
     </div>`).join('');
-
-  const msgCount = (o.messages||[]).length;
+  const msgs2 = (o.messages||[]).map(m=>`
+    <div class="msg-item">
+      <div class="msg-meta"><span class="msg-from">${m.from}</span><span class="msg-time">${m.time?m.time.slice(11,16):''}</span></div>
+      <div class="msg-text">${m.text}</div>
+      ${m.has_photo?`<div style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border-radius:8px;height:80px;display:flex;align-items:center;justify-content:center;color:#6366f1;font-weight:600;font-size:13px;margin:8px 0">📷 Фото</div>`:''}
+    </div>`).join('');
   const chatSection = `
   <div class="detail-card">
-    <h3 style="display:flex;align-items:center;gap:6px">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-      Сообщения${msgCount > 0 ? ` <span style="background:#2563eb;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700">${msgCount}</span>` : ''}
-    </h3>
-    ${msgs}${comments}
+    <h3>Сообщения</h3>
+    ${msgs2}${comments}
     <div class="comment-form">
       <input type="text" id="comment-input" placeholder="Написать комментарий...">
       <button onclick="addComment()">→</button>
     </div>
   </div>`;
 
-  return heroSection + quickBar + clinicSection + itemsSection + stagesSection + statusSection + chatSection;
+  return header + actions + fieldsGrid + pipeline + itemsSection + stagesSection + chatSection;
 }
 
 async function toggleAddForm(orderId) {
@@ -1435,6 +1482,16 @@ async function loadTechniciansForForm() {
   } catch { /* silent */ }
 }
 
+async function loadClinicsForForm() {
+  try {
+    const r = await fetch(`${API}/clinics`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    clinicsList = data.clinics;
+    const dl = document.getElementById('clinic-datalist');
+    if (dl) dl.innerHTML = clinicsList.map(c => `<option value="${c.name}">`).join('');
+  } catch { /* silent */ }
+}
+
 function showCreate() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-create').classList.add('active');
@@ -1524,6 +1581,106 @@ async function showDashboard() {
         <div class="kpi-card"><div class="kpi-num" style="color:#16a34a">${m.on_time_percent}%</div><div class="kpi-lbl">В срок</div></div>
       </div>`;
   } catch { document.getElementById('dashboard-content').innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+}
+
+// ── ЛАБОРАТОРИЯ ───────────────────────────────────────────────────────────────
+async function showLab() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-lab').classList.add('active');
+  setNav('bnav-lab');
+  await renderLab();
+}
+
+async function renderLab() {
+  const content = document.getElementById('lab-content');
+  content.innerHTML = '<div class="loading-text">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API}/clinics`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    clinicsList = data.clinics;
+    const isAdmin = currentUser && currentUser.role === 'admin';
+    const addBtn = isAdmin ? `<button class="btn-primary" style="margin-bottom:16px;width:100%" onclick="showClinicModal()">+ Добавить клинику</button>` : '';
+    if (!clinicsList.length) {
+      content.innerHTML = `<div class="section-title">Клиники</div>${addBtn}<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg><div>Нет клиник</div></div>`;
+      return;
+    }
+    const cards = clinicsList.map(c => `
+      <div class="detail-card" style="margin-bottom:10px;cursor:${isAdmin ? 'pointer' : 'default'}" ${isAdmin ? `onclick="showClinicModal('${c.id}')"` : ''}>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="font-weight:700;font-size:15px;color:#1e293b">${c.name}</div>
+          ${c.city ? `<span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:20px">${c.city}</span>` : ''}
+        </div>
+        ${c.contact_name ? `<div style="font-size:13px;color:#64748b;margin-top:6px">Контакт: ${c.contact_name}</div>` : ''}
+        ${c.phone ? `<div style="font-size:13px;color:#64748b">Телефон: <a href="tel:${c.phone}" style="color:#2563eb">${c.phone}</a></div>` : ''}
+        ${c.notes ? `<div style="font-size:12px;color:#94a3b8;margin-top:4px">${c.notes}</div>` : ''}
+      </div>`).join('');
+    content.innerHTML = `<div class="section-title">Клиники (${clinicsList.length})</div>${addBtn}${cards}`;
+  } catch {
+    content.innerHTML = '<div class="loading-text">Ошибка загрузки</div>';
+  }
+}
+
+function showClinicModal(clinicId) {
+  const clinic = clinicId ? clinicsList.find(c => c.id === clinicId) : null;
+  const modal = document.createElement('div');
+  modal.className = 'bank-modal-overlay';
+  modal.innerHTML = `
+    <div class="bank-modal">
+      <h3>${clinic ? 'Редактировать клинику' : 'Новая клиника'}</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
+        <input id="mc-name" class="form-input" placeholder="Название клиники *" value="${clinic ? clinic.name : ''}">
+        <input id="mc-city" class="form-input" placeholder="Город" value="${clinic ? clinic.city : ''}">
+        <input id="mc-phone" class="form-input" placeholder="Телефон" value="${clinic ? clinic.phone : ''}">
+        <input id="mc-contact" class="form-input" placeholder="Контактное лицо" value="${clinic ? clinic.contact_name : ''}">
+        <input id="mc-notes" class="form-input" placeholder="Примечания" value="${clinic ? clinic.notes : ''}">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-primary" style="flex:1" onclick="saveClinic('${clinicId || ''}')">Сохранить</button>
+        ${clinic ? `<button class="btn-danger-sm" onclick="deleteClinic('${clinicId}')">Удалить</button>` : ''}
+        <button class="btn-secondary" onclick="this.closest('.bank-modal-overlay').remove()">Отмена</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveClinic(clinicId) {
+  const name = document.getElementById('mc-name').value.trim();
+  if (!name) { showToast('Введите название клиники', 2000); return; }
+  const payload = {
+    name,
+    city: document.getElementById('mc-city').value.trim(),
+    phone: document.getElementById('mc-phone').value.trim(),
+    contact_name: document.getElementById('mc-contact').value.trim(),
+    notes: document.getElementById('mc-notes').value.trim(),
+  };
+  try {
+    const url = clinicId ? `${API}/clinics/${clinicId}` : `${API}/clinics`;
+    const method = clinicId ? 'PATCH' : 'POST';
+    const r = await fetch(url, {
+      method,
+      headers: {'Content-Type':'application/json','x-pin': localStorage.getItem('pin')},
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка'); }
+    document.querySelector('.bank-modal-overlay').remove();
+    showToast(clinicId ? 'Клиника обновлена' : 'Клиника добавлена');
+    await renderLab();
+    loadClinicsForForm();
+  } catch(e) { showToast(e.message || 'Ошибка сохранения'); }
+}
+
+async function deleteClinic(clinicId) {
+  if (!confirm('Удалить клинику?')) return;
+  try {
+    await fetch(`${API}/clinics/${clinicId}`, {
+      method: 'DELETE',
+      headers: {'x-pin': localStorage.getItem('pin')}
+    });
+    document.querySelector('.bank-modal-overlay').remove();
+    showToast('Клиника удалена');
+    await renderLab();
+    loadClinicsForForm();
+  } catch { showToast('Ошибка удаления'); }
 }
 
 // ── АЛЬФА-БАНК ────────────────────────────────────────────────────────────────
@@ -1654,6 +1811,154 @@ async function disconnectBank() {
   await fetch(`${API}/alfa/disconnect`, {method:'DELETE', headers:{'x-pin':localStorage.getItem('pin')}});
   showToast('Банк отключён');
   renderBankScreen();
+}
+
+// ── НАСТРОЙКИ ─────────────────────────────────────────────────────────────────
+function showSettings() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-settings').classList.add('active');
+  setNav('bnav-settings');
+  showSettingsTab('acts');
+}
+
+async function showSettingsTab(tab) {
+  ['acts','prices','bank'].forEach(t => {
+    const btn = document.getElementById('subnav-' + t + '-s');
+    const content = document.getElementById('settings-' + t + '-content');
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (content) content.style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'acts') {
+    const el = document.getElementById('settings-acts-content');
+    el.innerHTML = '<div class="loading-text">Загрузка...</div>';
+    try {
+      const r = await fetch(`${API}/acts`, {headers:{'x-pin':localStorage.getItem('pin')}});
+      const data = await r.json();
+      acts = data.acts;
+      if (!acts.length) {
+        el.innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><div>Нет актов. Выпишите акт из заказа.</div></div>`;
+      } else {
+        el.innerHTML = acts.map(a => {
+          const disc = a.discount > 0 ? `<span class="badge yellow" style="margin-left:4px">−${a.discount}%</span>` : '';
+          return `<div class="act-card" onclick="showActDetail('${a.id}')">
+            <div class="act-card-top"><span class="act-num">${a.id}</span><span class="act-date">${fmtDate(a.created_at)}</span></div>
+            <div class="act-clinic">${a.clinic_name}</div>
+            <div class="act-total">${a.total ? Number(a.total).toLocaleString('ru') + ' ₽' : '—'}${disc}</div>
+          </div>`;
+        }).join('');
+      }
+    } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+  }
+  if (tab === 'prices') {
+    const el = document.getElementById('settings-prices-content');
+    el.innerHTML = '<div class="loading-text">Загрузка...</div>';
+    try {
+      const r = await fetch(`${API}/nomenclature`, {headers:{'x-pin':localStorage.getItem('pin')}});
+      const data = await r.json();
+      nomenclature = data.items;
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      el.innerHTML = `<div class="section-title">Прайс-лист</div>` + nomenclature.map(n => `
+        <div class="detail-card" style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-weight:700;font-size:14px">${n.name}</div><div style="font-size:11px;color:#94a3b8">${n.article}</div></div>
+            <div style="font-weight:700;color:#2563eb">${Number(n.price).toLocaleString('ru')} ₽</div>
+          </div>
+        </div>`).join('');
+    } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+  }
+  if (tab === 'bank') {
+    const el = document.getElementById('settings-bank-content');
+    el.innerHTML = '<div class="loading-text">Загрузка...</div>';
+    try {
+      const r = await fetch(`${API}/alfa/status`, {headers:{'x-pin':localStorage.getItem('pin')}});
+      const status = await r.json();
+      el.innerHTML = status.connected
+        ? `<div class="bank-header"><div class="bank-logo">Альфа&#8209;Банк</div><div class="bank-status connected">&#10003; Подключён</div><button class="btn-danger-sm" onclick="disconnectBank();showSettingsTab('bank')">Отключить</button></div>`
+        : `<div class="bank-header"><div class="bank-logo">Альфа&#8209;Банк</div><div class="bank-status">Не подключён</div><p class="bank-desc">Подключите счёт Альфа-Банка для просмотра транзакций.</p><button class="btn-primary" onclick="connectBank()">Подключить Альфа-Банк</button></div>`;
+    } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+  }
+}
+
+// ── РЕДАКТИРОВАНИЕ ПОЛЯ ЗАКАЗА ────────────────────────────────────────────────
+function editField(orderId, field, label, currentVal) {
+  const modal = document.createElement('div');
+  modal.className = 'bank-modal-overlay';
+  const isDate = field === 'appointment_at' || field === 'deadline';
+  const inputHtml = isDate
+    ? `<input id="edit-field-val" class="form-input" type="datetime-local" value="${(currentVal||'').replace(' ','T').slice(0,16)}">`
+    : `<input id="edit-field-val" class="form-input" placeholder="${label}" value="${currentVal||''}">`;
+  modal.innerHTML = `
+    <div class="bank-modal">
+      <h3>${label}</h3>
+      <div style="margin:14px 0">${inputHtml}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" style="flex:1" onclick="saveField('${orderId}','${field}')">Сохранить</button>
+        <button class="btn-secondary" onclick="this.closest('.bank-modal-overlay').remove()">Отмена</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('edit-field-val').focus();
+}
+
+async function saveField(orderId, field) {
+  let value = document.getElementById('edit-field-val').value.trim();
+  if ((field === 'appointment_at' || field === 'deadline') && value) {
+    value = value.replace('T', ' ') + ':00';
+  }
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/field`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json','x-pin': localStorage.getItem('pin')},
+      body: JSON.stringify({field, value})
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    document.querySelector('.bank-modal-overlay').remove();
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showDetail(orderId);
+    showToast('Сохранено');
+  } catch { showToast('Ошибка сохранения'); }
+}
+
+// ── АВТО-РАСПРЕДЕЛЕНИЕ ТЕХНИКОВ ───────────────────────────────────────────────
+async function autoDistribute(orderId) {
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/auto-distribute`, {
+      method: 'POST',
+      headers: {'x-pin': localStorage.getItem('pin')}
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showDetail(orderId);
+    showToast('Техники назначены');
+  } catch { showToast('Ошибка авто-распределения'); }
+}
+
+// ── ПЕЧАТЬ НЗ ─────────────────────────────────────────────────────────────────
+function printNZ(orderId) {
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>НЗ ${o.id}</title><style>
+    body{font-family:Arial,sans-serif;font-size:12px;padding:20px}
+    h2{text-align:center}table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border:1px solid #888;padding:6px 10px}th{background:#f0f0f0}
+  </style></head><body>
+    <h2>Наряд-заказ № ${o.id}</h2>
+    <p><b>Пациент:</b> ${o.patient_name} &nbsp;&nbsp; <b>Клиника:</b> ${o.clinic_name} &nbsp;&nbsp; <b>Врач:</b> ${o.doctor_name}</p>
+    <p><b>Сдать до:</b> ${fmt(o.deadline)} &nbsp;&nbsp; <b>Цвет:</b> ${o.tooth_color||'—'}</p>
+    <table><thead><tr><th>Изделие</th><th>Кол-во</th><th>Цена</th><th>Сумма</th></tr></thead>
+    <tbody>${(o.items||[]).map(it=>`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price?Number(it.price).toLocaleString('ru')+' ₽':'—'}</td><td>${it.total?Number(it.total).toLocaleString('ru')+' ₽':'—'}</td></tr>`).join('')||`<tr><td colspan="4">${o.work_type} · ${o.units} ед.</td></tr>`}</tbody>
+    </table>
+    <p style="margin-top:20px"><b>Техник:</b> ${o.technician_name||'—'}</p>
+    <p style="margin-top:40px;border-top:1px solid #888;padding-top:10px">Подпись: ____________________ Дата: _______________</p>
+  </body></html>`);
+  w.document.close();
+  w.print();
 }
 
 // ── ИНИЦИАЛИЗАЦИЯ ─────────────────────────────────────────────────────────────

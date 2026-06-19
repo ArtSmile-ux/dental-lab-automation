@@ -140,6 +140,14 @@ def init_db():
         expires_at    TEXT,
         updated_at    TEXT
     );
+    CREATE TABLE IF NOT EXISTS clinics (
+        id           TEXT PRIMARY KEY,
+        name         TEXT NOT NULL UNIQUE,
+        phone        TEXT DEFAULT '',
+        contact_name TEXT DEFAULT '',
+        city         TEXT DEFAULT '',
+        notes        TEXT DEFAULT ''
+    );
     """)
 
     # Migration: add new columns to existing orders table if absent
@@ -150,6 +158,9 @@ def init_db():
         "ALTER TABLE orders ADD COLUMN total REAL DEFAULT 0",
         "ALTER TABLE orders ADD COLUMN payment_status TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN discount REAL DEFAULT 0",
+        "ALTER TABLE orders ADD COLUMN ceramist TEXT DEFAULT ''",
+        "ALTER TABLE orders ADD COLUMN modeler TEXT DEFAULT ''",
+        "ALTER TABLE orders ADD COLUMN implant_system TEXT DEFAULT ''",
     ]:
         try:
             c.execute(col_sql)
@@ -244,6 +255,15 @@ def init_db():
                 ("0056","ЦК ПА на имп. винт/ф.",8500.0,"шт"),
             ]
         )
+
+    # Seed clinics from existing orders if table is empty
+    if not c.execute("SELECT COUNT(*) FROM clinics").fetchone()[0]:
+        existing = c.execute("SELECT DISTINCT clinic_name FROM orders WHERE clinic_name != ''").fetchall()
+        for row in existing:
+            c.execute(
+                "INSERT OR IGNORE INTO clinics (id, name) VALUES (?, ?)",
+                (secrets.token_hex(6), row[0])
+            )
 
     conn.commit()
     conn.close()
@@ -361,6 +381,17 @@ class OrderCreate(BaseModel):
 class AlfaKeySet(BaseModel):
     api_key: str
 
+class ClinicCreate(BaseModel):
+    name: str
+    phone: str = ''
+    contact_name: str = ''
+    city: str = ''
+    notes: str = ''
+
+class OrderFieldUpdate(BaseModel):
+    field: str
+    value: str
+
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
@@ -418,6 +449,39 @@ def create_order(data: OrderCreate, tech=Depends(get_tech), conn=Depends(db)):
          now, data.deadline, data.appointment_at,
          "", tech_row["name"], data.total, "", data.discount)
     )
+    conn.commit()
+    return {"success": True, "order": _fetch_order(conn, order_id)}
+
+EDITABLE_ORDER_FIELDS = {
+    'patient_name', 'clinic_name', 'doctor_name', 'tooth_color',
+    'ceramist', 'modeler', 'implant_system', 'appointment_at',
+    'deadline', 'technician_name', 'work_type', 'teeth', 'description'
+}
+
+@app.patch("/orders/{order_id}/field")
+def update_order_field(order_id: str, data: OrderFieldUpdate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if data.field not in EDITABLE_ORDER_FIELDS:
+        raise HTTPException(status_code=400, detail=f"Поле '{data.field}' нельзя редактировать")
+    if not conn.execute("SELECT id FROM orders WHERE id=?", (order_id,)).fetchone():
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    conn.execute(f"UPDATE orders SET {data.field}=? WHERE id=?", (data.value, order_id))
+    conn.commit()
+    return {"success": True, "order": _fetch_order(conn, order_id)}
+
+@app.post("/orders/{order_id}/auto-distribute")
+def auto_distribute(order_id: str, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    techs = conn.execute("SELECT id, name FROM technicians WHERE role='technician'").fetchall()
+    if len(techs) >= 1:
+        conn.execute("UPDATE orders SET ceramist=? WHERE id=?", (techs[0]["name"], order_id))
+    if len(techs) >= 2:
+        conn.execute("UPDATE orders SET modeler=? WHERE id=?", (techs[1]["name"], order_id))
     conn.commit()
     return {"success": True, "order": _fetch_order(conn, order_id)}
 
@@ -648,6 +712,54 @@ def get_metrics(tech=Depends(get_tech), conn=Depends(db)):
     on_time    = round(completed / total * 100) if total else 0
     return {"total_orders": total, "in_progress": in_prog, "completed": completed,
             "overdue": overdue, "on_time_percent": on_time}
+
+
+# ── CLINICS ───────────────────────────────────────────────────────────────────
+
+@app.get("/clinics")
+def get_clinics(tech=Depends(get_tech), conn=Depends(db)):
+    rows = conn.execute("SELECT * FROM clinics ORDER BY name").fetchall()
+    return {"clinics": [dict(r) for r in rows]}
+
+@app.post("/clinics")
+def create_clinic(data: ClinicCreate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if not data.name.strip():
+        raise HTTPException(status_code=400, detail="Название клиники не может быть пустым")
+    clinic_id = secrets.token_hex(6)
+    try:
+        conn.execute(
+            "INSERT INTO clinics (id, name, phone, contact_name, city, notes) VALUES (?,?,?,?,?,?)",
+            (clinic_id, data.name.strip(), data.phone, data.contact_name, data.city, data.notes)
+        )
+        conn.commit()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Клиника с таким названием уже существует")
+    return {"success": True, "clinic": dict(conn.execute("SELECT * FROM clinics WHERE id=?", (clinic_id,)).fetchone())}
+
+@app.patch("/clinics/{clinic_id}")
+def update_clinic(clinic_id: str, data: ClinicCreate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if not conn.execute("SELECT id FROM clinics WHERE id=?", (clinic_id,)).fetchone():
+        raise HTTPException(status_code=404, detail="Клиника не найдена")
+    if not data.name.strip():
+        raise HTTPException(status_code=400, detail="Название не может быть пустым")
+    conn.execute(
+        "UPDATE clinics SET name=?, phone=?, contact_name=?, city=?, notes=? WHERE id=?",
+        (data.name.strip(), data.phone, data.contact_name, data.city, data.notes, clinic_id)
+    )
+    conn.commit()
+    return {"success": True, "clinic": dict(conn.execute("SELECT * FROM clinics WHERE id=?", (clinic_id,)).fetchone())}
+
+@app.delete("/clinics/{clinic_id}")
+def delete_clinic(clinic_id: str, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    conn.execute("DELETE FROM clinics WHERE id=?", (clinic_id,))
+    conn.commit()
+    return {"success": True}
 
 
 # ── ALFA BANK ──────────────────────────────────────────────────────────────────
