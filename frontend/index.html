@@ -226,6 +226,19 @@
   .stage-chip-label { font-size:10px; color:#94a3b8; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .stage-chip.selected .stage-chip-label { color:#1e293b; }
   .stage-detail-wrap { background:#f8fafc; border-radius:12px; padding:12px 14px; }
+  /* ── ЭТАПЫ (ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ КАРТОЧКАМИ, вариант 2) ── */
+  .stages-scroll { display:flex; gap:10px; overflow-x:auto; padding:10px 2px 16px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
+  .stage-card { flex:0 0 156px; scroll-snap-align:start; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:10px 12px; }
+  .stage-card.done { background:#f0fdf4; border-color:#bbf7d0; }
+  .stage-card.active { background:#eff6ff; border-color:#bfdbfe; }
+  .stage-card-top { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .stage-card-dot { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; background:#f1f5f9; color:#94a3b8; border:2px solid #e2e8f0; }
+  .stage-card.done .stage-card-dot { background:#22c55e; color:#fff; border-color:#22c55e; }
+  .stage-card.active .stage-card-dot { background:#2563eb; color:#fff; border-color:#2563eb; }
+  .stage-card-op { font-size:12px; font-weight:700; color:#1e293b; line-height:1.25; }
+  .stage-card .stage-tech, .stage-card .stage-dates { font-size:11px; }
+  .stage-card .stage-actions { flex-direction:column; }
+  .stage-card .stage-btn { width:100%; text-align:center; }
   .add-stage-form { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px; margin-top:12px; display:none; flex-direction:column; gap:8px; }
   .stage-form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .stage-form-input { width:100%; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none; background:#fff; }
@@ -1015,21 +1028,27 @@ function renderDetail(o) {
     </div>
   </div>`;
 
-  // ── ЭТАПЫ (горизонтальная лента, вариант 1) ──
+  // ── ЭТАПЫ (горизонтальный скролл карточками, вариант 2) ──
   const stages = o.stages || [];
-  let activeStageIdx = stages.findIndex(s => !s.actual_date);
-  if (activeStageIdx === -1 && stages.length) activeStageIdx = stages.length - 1;
-  const chips = stages.map((s, i) => {
+  const stageCards = stages.map(s => {
     let cls='pending', dot=s.n;
     if (s.actual_date){cls='done';dot='✓';}
     else if (s.transferred_at||s.accepted_at){cls='active';}
-    if (i===activeStageIdx) cls+=' selected';
-    return `<button class="stage-chip ${cls}" onclick="selectStage('${o.id}',${i})">
-      <div class="stage-chip-dot">${dot}</div>
-      <div class="stage-chip-label">${s.operation}</div>
-    </button>`;
+    const dates = s.transferred_at
+      ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date?`<br>Выполнено: ${fmtShort(s.actual_date)}`:'<br><em>Выполняется...</em>'}`
+      : `${s.planned_date?'План: '+fmtDate(s.planned_date):'<em style="color:#cbd5e1">Ожидает</em>'}`;
+    const acts2 = isAdmin ? `
+    <div class="stage-actions">
+      ${!s.transferred_at&&!s.actual_date?`<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ В работу</button>`:''}
+      ${s.transferred_at&&!s.actual_date?`<button class="stage-btn complete" onclick="completeStage('${o.id}',${s.id})">✓ Завершить</button>`:''}
+      <button class="stage-btn del-stage" onclick="deleteStage('${o.id}',${s.id})">× Удалить</button>
+    </div>` : '';
+    return `<div class="stage-card ${cls}">
+      <div class="stage-card-top"><div class="stage-card-dot">${dot}</div><div class="stage-card-op">${s.operation}</div></div>
+      <div class="stage-tech">👤 ${s.technician}</div>
+      <div class="stage-dates">${dates}</div><span class="stage-qty-tag">× ${s.qty} ед.</span>${acts2}
+    </div>`;
   }).join('');
-  const stageItems = stages.length ? stageDetailHtml(o, activeStageIdx) : '';
 
   const techOpts = techniciansList.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   const addStageForm = isAdmin ? `
@@ -1048,10 +1067,7 @@ function renderDetail(o) {
   const stagesSection = `
   <div class="detail-card">
     <h3>Этапы производства</h3>
-    ${stages.length?`
-    <div class="stages-strip" id="stages-strip-${o.id}">${chips}</div>
-    <div class="stage-detail-wrap" id="stage-detail-${o.id}">${stageItems}</div>
-    `:`<div style="color:#94a3b8;font-size:13px;padding:8px 0">Этапы не заданы</div>`}
+    ${stageCards?`<div class="stages-scroll">${stageCards}</div>`:`<div style="color:#94a3b8;font-size:13px;padding:8px 0">Этапы не заданы</div>`}
     ${addStageForm}
   </div>`;
 
