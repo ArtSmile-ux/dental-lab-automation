@@ -440,6 +440,10 @@
       </div>
     </div>
 
+    <div class="order-actions">
+      <button class="btn-action primary" id="btn-create" onclick="submitOrder()">Создать заказ</button>
+    </div>
+
     <div class="order-fields-grid">
       <div class="order-field">
         <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
@@ -512,7 +516,31 @@
       </div>
     </div>
 
-    <button class="btn-primary" id="btn-create" onclick="submitOrder()">Создать заказ</button>
+    <div class="status-pipeline">
+      <button class="pipe-btn active">Новый</button>
+      <button class="pipe-btn">В работе</button>
+      <button class="pipe-btn">На проверке</button>
+      <button class="pipe-btn">Передать на доставку</button>
+      <button class="pipe-btn">Сдано</button>
+    </div>
+
+    <div class="detail-card">
+      <div class="items-hdr">Заказанные изделия</div>
+      <button class="items-add-toggle" onclick="toggleDraftAddForm()">+ Добавить изделие</button>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table class="items-table">
+          <thead><tr><th>АРТ.</th><th>ПОЗИЦИЯ ПРАЙСА</th><th>КОЛ.</th><th>ЦЕНА</th><th>СУММА</th><th></th></tr></thead>
+          <tbody id="draft-items-tbody"></tbody>
+        </table>
+      </div>
+      <div id="draft-add-item-wrap" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+        <select class="add-item-select" id="draft-nom-sel" style="flex:1;min-width:180px">
+          <option value="">— Выберите изделие —</option>
+        </select>
+        <input class="add-item-qty" id="draft-nom-qty" type="number" min="1" max="99" value="1" style="width:56px;padding:6px;border:1px solid #e2e8f0;border-radius:8px">
+        <button class="add-item-btn" onclick="addDraftItem()">Добавить</button>
+      </div>
+    </div>
   </div>
 
   <!-- ЭКРАН: ДАШБОРД -->
@@ -599,6 +627,7 @@ let orders = [];
 let currentOrderId = null;
 let techniciansList = [];
 let nomenclature = [];
+let draftItems = [];
 let filterTech = '';
 let filterClinic = '';
 let filterStatus = '';
@@ -1568,12 +1597,68 @@ async function loadClinicsForForm() {
   } catch { /* silent */ }
 }
 
-function showCreate() {
+async function showCreate() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-create').classList.add('active');
   setNav('bnav-create');
   document.getElementById('btn-create').disabled = false;
   document.getElementById('btn-create').textContent = 'Создать заказ';
+  draftItems = [];
+  renderDraftItems();
+  document.getElementById('draft-add-item-wrap').style.display = 'none';
+  if (!nomenclature.length) await loadNomenclature();
+  const nomSel = document.getElementById('draft-nom-sel');
+  if (nomSel) nomSel.innerHTML = `<option value="">— Выберите изделие —</option>` +
+    nomenclature.map(n => `<option value="${n.id}">${n.article} — ${n.name} (${Number(n.price).toLocaleString('ru')} ₽)</option>`).join('');
+}
+
+function renderDraftItems() {
+  const tbody = document.getElementById('draft-items-tbody');
+  if (!tbody) return;
+  if (!draftItems.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="color:#94a3b8;padding:12px 0">Изделия пока не добавлены</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = draftItems.map((it, i) => {
+    const nom = nomenclature.find(n => n.id === it.nomenclature_id) || {};
+    const total = (nom.price || 0) * it.qty;
+    return `<tr>
+      <td style="color:#94a3b8">${nom.article || '—'}</td>
+      <td style="font-weight:600">${nom.name || '—'}</td>
+      <td><input type="number" min="1" max="99" value="${it.qty}" style="width:44px;padding:3px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-size:13px" onchange="updateDraftItemQty(${i},this.value)"></td>
+      <td>${nom.price ? Number(nom.price).toLocaleString('ru')+' ₽' : '—'}</td>
+      <td>${total ? Number(total).toLocaleString('ru')+' ₽' : '—'}</td>
+      <td><button class="td-del" onclick="deleteDraftItem(${i})">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateDraftItemQty(i, val) {
+  draftItems[i].qty = parseInt(val) || 1;
+  renderDraftItems();
+}
+
+function deleteDraftItem(i) {
+  draftItems.splice(i, 1);
+  renderDraftItems();
+}
+
+function toggleDraftAddForm() {
+  const wrap = document.getElementById('draft-add-item-wrap');
+  if (!wrap) return;
+  wrap.style.display = wrap.style.display === 'none' || !wrap.style.display ? 'flex' : 'none';
+}
+
+function addDraftItem() {
+  const sel = document.getElementById('draft-nom-sel');
+  const qtyInput = document.getElementById('draft-nom-qty');
+  const nomId = parseInt(sel.value);
+  if (!nomId) { showToast('Выберите изделие из списка', 2000); return; }
+  const qty = parseInt(qtyInput.value) || 1;
+  draftItems.push({ nomenclature_id: nomId, qty });
+  sel.value = '';
+  qtyInput.value = 1;
+  renderDraftItems();
 }
 
 async function submitOrder() {
@@ -1625,14 +1710,27 @@ async function submitOrder() {
     });
     if (!r.ok) throw new Error();
     const data = await r.json();
-    orders.unshift(data.order);
+    let order = data.order;
+    for (const it of draftItems) {
+      try {
+        const ir = await fetch(`${API}/orders/${order.id}/items`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','x-pin': localStorage.getItem('pin')},
+          body: JSON.stringify({nomenclature_id: it.nomenclature_id, qty: it.qty})
+        });
+        const idata = await ir.json();
+        if (idata.order) order = idata.order;
+      } catch { /* skip failed item, order is already created */ }
+    }
+    const idx = orders.findIndex(x => x.id === order.id);
+    if (idx >= 0) orders[idx] = order; else orders.unshift(order);
+    draftItems = [];
     // Reset form
     ['f-patient','f-clinic','f-doctor','f-work','f-teeth','f-desc','f-deadline','f-appt']
       .forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('f-units').value = 1;
-    showToast(`Заказ создан: ${data.order.id}`);
-    showOrders();
-    renderOrders();
+    showToast(`Заказ создан: ${order.id}`);
+    showDetail(order.id);
   } catch {
     showToast('Ошибка при создании заказа');
     btn.disabled = false;
