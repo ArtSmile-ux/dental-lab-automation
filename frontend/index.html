@@ -48,7 +48,7 @@
   .top-bar-title { font-size:16px; font-weight:700; }
   .top-bar-sub { font-size:12px; color:#64748b; margin-top:1px; }
   .btn-logout { background:none; border:none; color:#94a3b8; font-size:13px; cursor:pointer; padding:4px 8px; }
-  .bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:430px; margin:0 auto; background:#fff; border-top:1px solid #e2e8f0; display:flex; z-index:50; }
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:430px; margin:0 auto; background:#fff; border-top:1px solid #e2e8f0; display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom); }
   .bnav-btn { flex:1; padding:10px 8px 14px; border:none; background:none; font-size:10px; font-weight:600; color:#94a3b8; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; }
   .bnav-btn.active { color:#2563eb; }
   .bnav-btn svg { width:22px; height:22px; }
@@ -57,7 +57,7 @@
   .bnav-btn.add-btn .add-circle svg { width:24px; height:24px; color:#fff; }
 
   /* ── ЭКРАНЫ ── */
-  .screen { display:none; padding:16px; padding-bottom:90px; }
+  .screen { display:none; padding:16px; padding-bottom:calc(100px + env(safe-area-inset-bottom)); }
   .screen.active { display:block; }
 
   /* ── ХЕДЕР ТЕХНИКА ── */
