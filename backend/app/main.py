@@ -634,6 +634,24 @@ def complete_stage(order_id: str, stage_id: int, tech=Depends(get_tech), conn=De
     conn.commit()
     return {"success": True, "order": _fetch_order(conn, order_id)}
 
+@app.patch("/orders/{order_id}/stages/{stage_id}/revert")
+def revert_stage(order_id: str, stage_id: int, tech=Depends(get_tech), conn=Depends(db)):
+    row = conn.execute(
+        "SELECT actual_date, transferred_at FROM order_stages WHERE id=? AND order_id=?",
+        (stage_id, order_id)
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Этап не найден")
+    if row["actual_date"]:
+        conn.execute("UPDATE order_stages SET actual_date=NULL WHERE id=? AND order_id=?", (stage_id, order_id))
+    elif row["transferred_at"]:
+        conn.execute(
+            "UPDATE order_stages SET transferred_at=NULL, accepted_at=NULL WHERE id=? AND order_id=?",
+            (stage_id, order_id)
+        )
+    conn.commit()
+    return {"success": True, "order": _fetch_order(conn, order_id)}
+
 @app.post("/orders/{order_id}/comments")
 def add_comment(order_id: str, data: CommentAdd, tech=Depends(get_tech), conn=Depends(db)):
     if not conn.execute("SELECT id FROM orders WHERE id=?", (order_id,)).fetchone():

@@ -214,6 +214,7 @@
   .stage-btn:active { opacity:.75; }
   .stage-btn.transfer { background:#eff6ff; color:#2563eb; }
   .stage-btn.complete { background:#dcfce7; color:#16a34a; }
+  .stage-btn.revert { background:#f1f5f9; color:#64748b; }
   .stage-btn.del-stage { background:#fee2e2; color:#dc2626; }
   /* ── ЭТАПЫ (ГОРИЗОНТАЛЬНАЯ ЛЕНТА, вариант 1) ── */
   .stages-strip { display:flex; padding:10px 2px 16px; }
@@ -242,6 +243,7 @@
   .stage-card .stage-dates .red { color:#dc2626; font-weight:700; }
   .stage-card .stage-actions { flex-direction:column; }
   .stage-card .stage-btn { width:100%; text-align:center; }
+  .stage-card.active .stage-btn.complete { font-size:13px; padding:10px 12px; font-weight:800; }
   .add-stage-form { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px; margin-top:12px; display:none; flex-direction:column; gap:8px; }
   .stage-form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .stage-form-input { width:100%; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none; background:#fff; }
@@ -1047,6 +1049,7 @@ function renderDetail(o) {
     <div class="stage-actions">
       ${!s.transferred_at&&!s.actual_date?`<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ В работу</button>`:''}
       ${s.transferred_at&&!s.actual_date?`<button class="stage-btn complete" onclick="completeStage('${o.id}',${s.id})">✓ Завершить</button>`:''}
+      ${s.transferred_at&&!s.actual_date?`<button class="stage-btn revert" onclick="revertStage('${o.id}',${s.id})">↩ Откатить</button>`:''}
       <button class="stage-btn del-stage" onclick="deleteStage('${o.id}',${s.id})">× Удалить</button>
     </div>` : '';
     return `<div class="stage-card ${cls}">
@@ -1312,6 +1315,26 @@ async function completeStage(orderId, stageId) {
     const idx = orders.findIndex(x => x.id === orderId);
     if (idx >= 0) orders[idx] = data.order;
     showToast('Этап завершён');
+    showDetail(orderId);
+  } catch { showToast('Ошибка'); }
+}
+
+async function revertStage(orderId, stageId) {
+  try {
+    const o = orders.find(x => x.id === orderId);
+    const sIdx = (o?.stages || []).findIndex(s => s.id === stageId);
+    const prevId = sIdx > 0 ? o.stages[sIdx - 1].id : null;
+    let data = await (await fetch(`${API}/orders/${orderId}/stages/${stageId}/revert`, {
+      method: 'PATCH', headers: {'x-pin':localStorage.getItem('pin')}
+    })).json();
+    if (prevId) {
+      data = await (await fetch(`${API}/orders/${orderId}/stages/${prevId}/revert`, {
+        method: 'PATCH', headers: {'x-pin':localStorage.getItem('pin')}
+      })).json();
+    }
+    const idx = orders.findIndex(x => x.id === orderId);
+    if (idx >= 0) orders[idx] = data.order;
+    showToast('Откат на предыдущий этап выполнен');
     showDetail(orderId);
   } catch { showToast('Ошибка'); }
 }
