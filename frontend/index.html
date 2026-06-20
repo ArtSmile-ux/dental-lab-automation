@@ -228,26 +228,20 @@
   .stage-detail-wrap { background:#f8fafc; border-radius:12px; padding:12px 14px; }
   /* ── ЭТАПЫ (ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ КАРТОЧКАМИ, вариант 2) ── */
   .stages-scroll { display:flex; gap:10px; overflow-x:auto; padding:10px 2px 16px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
-  .stage-card { flex:1 1 156px; min-width:156px; scroll-snap-align:start; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:10px 12px; }
+  .stage-card { position:relative; flex:1 1 156px; min-width:156px; scroll-snap-align:start; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:10px 12px; transition:transform .15s, box-shadow .15s; }
   .stage-card.done { background:#f0fdf4; border-color:#bbf7d0; }
-  .stage-card.active { background:#eff6ff; border-color:#bfdbfe; }
+  .stage-card.active { background:#eff6ff; border-color:#bfdbfe; transform:scale(1.05); box-shadow:0 6px 16px rgba(37,99,235,.2); z-index:2; }
+  .stage-card:not(:last-child)::after { content:''; position:absolute; top:21px; right:-10px; width:10px; height:2px; background:#e2e8f0; z-index:0; }
+  .stage-card.done:not(:last-child)::after { background:#22c55e; }
   .stage-card-top { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
-  .stage-card-dot { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; background:#f1f5f9; color:#94a3b8; border:2px solid #e2e8f0; }
+  .stage-card-dot { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; background:#f1f5f9; color:#94a3b8; border:2px solid #e2e8f0; position:relative; z-index:1; }
   .stage-card.done .stage-card-dot { background:#22c55e; color:#fff; border-color:#22c55e; }
   .stage-card.active .stage-card-dot { background:#2563eb; color:#fff; border-color:#2563eb; }
   .stage-card-op { font-size:12px; font-weight:700; color:#1e293b; line-height:1.25; }
   .stage-card .stage-tech, .stage-card .stage-dates { font-size:11px; }
+  .stage-card .stage-dates .red { color:#dc2626; font-weight:700; }
   .stage-card .stage-actions { flex-direction:column; }
   .stage-card .stage-btn { width:100%; text-align:center; }
-  /* ── ЭТАПЫ (ПРОГРЕСС-БАР + ТЕКУЩИЙ ЭТАП, вариант 3) ── */
-  .stage-progress-bar { display:flex; gap:3px; height:6px; margin:8px 2px 14px; border-radius:4px; overflow:hidden; }
-  .stage-progress-seg { flex:1; background:#e2e8f0; }
-  .stage-progress-seg.done { background:#22c55e; }
-  .stage-progress-seg.active { background:#2563eb; }
-  .stage-current-card { border-radius:12px; padding:14px; margin-bottom:8px; background:#eff6ff; border:1.5px solid #bfdbfe; }
-  .stage-current-card.done { background:#f0fdf4; border-color:#bbf7d0; }
-  .stage-current-label { font-size:11px; color:#2563eb; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
-  .stage-current-card.done .stage-current-label { color:#16a34a; }
   .add-stage-form { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px; margin-top:12px; display:none; flex-direction:column; gap:8px; }
   .stage-form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .stage-form-input { width:100%; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none; background:#fff; }
@@ -1037,44 +1031,18 @@ function renderDetail(o) {
     </div>
   </div>`;
 
-  // ── ЭТАПЫ (прогресс-бар + текущий этап, вариант 3) ──
+  // ── ЭТАПЫ (горизонтальный скролл карточками, вариант 2) ──
   const stages = o.stages || [];
-  let curIdx = stages.findIndex(s => !s.actual_date);
-  if (curIdx === -1 && stages.length) curIdx = stages.length - 1;
-  const progressBar = stages.map((s, i) => {
-    let cls='pending';
-    if (s.actual_date) cls='done';
-    else if (i===curIdx && (s.transferred_at||s.accepted_at)) cls='active';
-    return `<div class="stage-progress-seg ${cls}"></div>`;
-  }).join('');
-  const curStage = stages[curIdx];
-  const curStageCard = curStage ? (() => {
-    const s = curStage;
-    let cls='pending';
-    if (s.actual_date) cls='done';
-    else if (s.transferred_at||s.accepted_at) cls='active';
-    const dates = s.transferred_at
-      ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date?`<br>Выполнено: ${fmtShort(s.actual_date)}`:'<br><em>Выполняется...</em>'}`
-      : `${s.planned_date?'План: '+fmtDate(s.planned_date):'<em style="color:#cbd5e1">Ожидает</em>'}`;
-    const acts2 = isAdmin ? `
-    <div class="stage-actions">
-      ${!s.transferred_at&&!s.actual_date?`<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ В работу</button>`:''}
-      ${s.transferred_at&&!s.actual_date?`<button class="stage-btn complete" onclick="completeStage('${o.id}',${s.id})">✓ Завершить</button>`:''}
-      <button class="stage-btn del-stage" onclick="deleteStage('${o.id}',${s.id})">× Удалить</button>
-    </div>` : '';
-    return `<div class="stage-current-card ${cls}">
-      <div class="stage-current-label">Этап ${curIdx+1} из ${stages.length}</div>
-      <div class="stage-op">${s.operation}</div><div class="stage-tech">👤 ${s.technician}</div>
-      <div class="stage-dates">${dates}</div><span class="stage-qty-tag">× ${s.qty} ед.</span>${acts2}
-    </div>`;
-  })() : '';
   const stageCards = stages.map(s => {
     let cls='pending', dot=s.n;
     if (s.actual_date){cls='done';dot='✓';}
     else if (s.transferred_at||s.accepted_at){cls='active';}
+    const isOverdue = !s.transferred_at && s.planned_date && new Date(s.planned_date) < new Date(new Date().toDateString());
     const dates = s.transferred_at
       ? `В работу: ${fmtShort(s.transferred_at)}${s.actual_date?`<br>Выполнено: ${fmtShort(s.actual_date)}`:'<br><em>Выполняется...</em>'}`
-      : `${s.planned_date?'План: '+fmtDate(s.planned_date):'<em style="color:#cbd5e1">Ожидает</em>'}`;
+      : s.planned_date
+        ? `<span class="${isOverdue?'red':''}">План: ${fmtDate(s.planned_date)}${isOverdue?' ⚠':''}</span>`
+        : '<em style="color:#cbd5e1">Ожидает</em>';
     const acts2 = isAdmin ? `
     <div class="stage-actions">
       ${!s.transferred_at&&!s.actual_date?`<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ В работу</button>`:''}
@@ -1105,12 +1073,7 @@ function renderDetail(o) {
   const stagesSection = `
   <div class="detail-card">
     <h3>Этапы производства</h3>
-    ${stages.length?`
-    <div class="stage-progress-bar">${progressBar}</div>
-    ${curStageCard}
-    <button class="stage-toggle-btn" onclick="toggleAllStages('${o.id}')">Показать все этапы (${stages.length})</button>
-    <div class="stages-scroll" id="all-stages-${o.id}" style="display:none">${stageCards}</div>
-    `:`<div style="color:#94a3b8;font-size:13px;padding:8px 0">Этапы не заданы</div>`}
+    ${stageCards?`<div class="stages-scroll">${stageCards}</div>`:`<div style="color:#94a3b8;font-size:13px;padding:8px 0">Этапы не заданы</div>`}
     ${addStageForm}
   </div>`;
 
@@ -1288,11 +1251,6 @@ function selectStage(orderId, idx) {
 }
 function toggleAddStageForm(orderId) {
   const wrap = document.getElementById(`add-stage-wrap-${orderId}`);
-  if (!wrap) return;
-  wrap.style.display = wrap.style.display === 'none' || !wrap.style.display ? 'flex' : 'none';
-}
-function toggleAllStages(orderId) {
-  const wrap = document.getElementById(`all-stages-${orderId}`);
   if (!wrap) return;
   wrap.style.display = wrap.style.display === 'none' || !wrap.style.display ? 'flex' : 'none';
 }
