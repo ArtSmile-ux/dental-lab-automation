@@ -465,7 +465,7 @@
         <datalist id="clinic-datalist"></datalist>
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Моделировщик</div>
+        <div class="order-field-lbl">Техник</div>
         <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
@@ -473,16 +473,16 @@
         <input class="form-input" id="f-doctor" placeholder="Соколов К.Д." autocomplete="off">
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Дата приёма</div>
-        <input class="form-input" id="f-appt" type="datetime-local">
+        <div class="order-field-lbl">Керамист</div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
         <input class="form-input" id="f-patient" placeholder="Иванов И.И." autocomplete="off">
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Керамист</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
+        <div class="order-field-lbl">Дата приёма</div>
+        <input class="form-input" id="f-appt" type="datetime-local">
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Цвет зубов</div>
@@ -1105,24 +1105,24 @@ function renderDetail(o) {
       <div class="order-field-val">${o.clinic_name||'—'} ${chg('clinic_name','Клиника',o.clinic_name)}</div>
     </div>
     <div class="order-field">
-      <div class="order-field-lbl">Моделировщик</div>
-      <div class="order-field-val">${o.modeler||'—'} ${chg('modeler','Моделировщик',o.modeler)}</div>
+      <div class="order-field-lbl">Техник</div>
+      <div class="order-field-val">${o.modeler||'—'} ${chg('modeler','Техник',o.modeler)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Врач</div>
       <div class="order-field-val">${o.doctor_name||'—'} ${chg('doctor_name','Врач',o.doctor_name)}</div>
     </div>
     <div class="order-field">
-      <div class="order-field-lbl">Дата приёма</div>
-      <div class="order-field-val"><span class="${apptColor}">${apptVal}</span> ${chg('appointment_at','Дата приёма',o.appointment_at)}</div>
+      <div class="order-field-lbl">Керамист</div>
+      <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Керамист',o.ceramist)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Пациент</div>
       <div class="order-field-val">${o.patient_name||'—'} ${chg('patient_name','Пациент',o.patient_name)}</div>
     </div>
     <div class="order-field">
-      <div class="order-field-lbl">Керамист</div>
-      <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Керамист',o.ceramist)}</div>
+      <div class="order-field-lbl">Дата приёма</div>
+      <div class="order-field-val"><span class="${apptColor}">${apptVal}</span> ${chg('appointment_at','Дата приёма',o.appointment_at)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Цвет зубов</div>
