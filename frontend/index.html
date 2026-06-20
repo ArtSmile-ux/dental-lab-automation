@@ -100,7 +100,7 @@
   /* ── ДЕТАЛИ ЗАКАЗА ── */
   .back-btn { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:14px; font-weight:600; margin-bottom:0; background:none; border:none; cursor:pointer; padding:12px 0 10px; }
   .detail-card { background:#fff; border-radius:16px; padding:18px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-  .detail-card h3 { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; }
+  .detail-card h3 { font-size:13px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; }
   .detail-row { display:flex; justify-content:space-between; align-items:flex-start; padding:9px 0; border-bottom:1px solid #f1f5f9; font-size:14px; }
   .detail-row:last-child { border-bottom:none; }
   .dl { color:#64748b; font-size:13px; flex-shrink:0; }
@@ -127,7 +127,7 @@
   .lab-item.disabled { color:#cbd5e1; cursor:default; }
   .lab-item.disabled::before { content:'○'; font-size:11px; color:#e2e8f0; }
   .order-actions { display:flex; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid #e2e8f0; margin-bottom:12px; position:relative; }
-  .btn-action { padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:12px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap; }
+  .btn-action { padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:14px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap; }
   .btn-action:disabled { opacity:.85; cursor:not-allowed; }
   .btn-action:hover { background:#f8fafc; }
   .btn-action.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
@@ -136,18 +136,18 @@
   .order-fields-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:12px; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
   .order-field { padding:10px 14px; border-bottom:1px solid #f1f5f9; display:flex; flex-direction:column; gap:2px; }
   .order-field:nth-child(odd) { border-right:1px solid #f1f5f9; }
-  .order-field-lbl { font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
-  .order-field-val { font-size:14px; font-weight:600; color:#1e293b; display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:22px; }
+  .order-field-lbl { font-size:13px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+  .order-field-val { font-size:16px; font-weight:600; color:#1e293b; display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:22px; }
   .order-field-val .red { color:#dc2626; }
-  .btn-change { font-size:11px; color:#2563eb; background:none; border:none; cursor:pointer; padding:0; white-space:nowrap; flex-shrink:0; }
+  .btn-change { font-size:13px; color:#2563eb; background:none; border:none; cursor:pointer; padding:0; white-space:nowrap; flex-shrink:0; }
   .status-pipeline { display:flex; background:#fff; border-radius:16px; overflow:hidden; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-  .pipe-btn { flex:1; padding:10px 4px; border:none; background:none; font-size:11px; font-weight:600; color:#94a3b8; cursor:pointer; text-align:center; border-right:1px solid #f1f5f9; transition:all .15s; }
+  .pipe-btn { flex:1; padding:10px 4px; border:none; background:none; font-size:13px; font-weight:600; color:#94a3b8; cursor:pointer; text-align:center; border-right:1px solid #f1f5f9; transition:all .15s; }
   .pipe-btn:last-child { border-right:none; }
   .pipe-btn.active { background:#2563eb; color:#fff; }
   .pipe-btn:hover:not(.active) { background:#f1f5f9; color:#475569; }
-  .items-hdr { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
-  .items-table { width:100%; border-collapse:collapse; font-size:12px; }
-  .items-table th { padding:8px 6px; text-align:left; font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; border-bottom:2px solid #f1f5f9; }
+  .items-hdr { font-size:13px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+  .items-table { width:100%; border-collapse:collapse; font-size:14px; }
+  .items-table th { padding:8px 6px; text-align:left; font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; border-bottom:2px solid #f1f5f9; }
   .items-table td { padding:9px 6px; border-bottom:1px solid #f8fafc; color:#334155; vertical-align:middle; }
   .items-table tr:last-child td { border-bottom:none; }
   th .col-resize-handle, .items-table th .col-resize-handle { position:absolute; top:0; right:-3px; width:6px; height:100%; cursor:col-resize; z-index:2; touch-action:none; }
@@ -189,16 +189,16 @@
   .item-dot-no:hover { border-color:#22c55e; background:#f0fdf4; }
   .item-del { width:24px; height:24px; border-radius:50%; background:#fee2e2; color:#dc2626; border:none; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; font-weight:700; line-height:1; }
   .add-item-form { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
-  .add-item-select { flex:1; min-width:0; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 10px; font-size:13px; font-family:inherit; outline:none; color:#1a1a1a; background:#fff; }
+  .add-item-select { flex:1; min-width:0; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 10px; font-size:15px; font-family:inherit; outline:none; color:#1a1a1a; background:#fff; }
   .add-item-select:focus { border-color:#2563eb; }
-  .add-item-qty { width:56px; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 8px; font-size:13px; font-weight:700; text-align:center; outline:none; }
+  .add-item-qty { width:56px; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 8px; font-size:15px; font-weight:700; text-align:center; outline:none; }
   .add-item-qty:focus { border-color:#2563eb; }
-  .add-item-btn { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .add-item-btn { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap; }
   .add-item-btn:active { opacity:.85; }
-  .items-add-toggle { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; padding:10px 0 2px; }
+  .items-add-toggle { display:flex; align-items:center; gap:6px; color:#2563eb; font-size:15px; font-weight:600; background:none; border:none; cursor:pointer; padding:10px 0 2px; }
   .items-total-row { display:flex; justify-content:space-between; align-items:center; padding-top:10px; margin-top:4px; border-top:2px solid #f1f5f9; }
-  .items-total-lbl { font-size:12px; color:#64748b; font-weight:600; }
-  .items-total-val { font-size:16px; font-weight:800; color:#1e293b; }
+  .items-total-lbl { font-size:14px; color:#64748b; font-weight:600; }
+  .items-total-val { font-size:18px; font-weight:800; color:#1e293b; }
 
   /* ── ЭТАПЫ (TIMELINE) ── */
   .stages-list { margin-top:4px; }
@@ -216,10 +216,10 @@
   .stage-op { font-size:14px; font-weight:700; color:#1e293b; margin-bottom:3px; }
   .stage-tech { font-size:12px; color:#2563eb; font-weight:600; margin-bottom:3px; }
   .stage-dates { font-size:11px; color:#94a3b8; line-height:1.7; }
-  .stage-qty-tag { font-size:11px; color:#64748b; background:#f8fafc; padding:2px 8px; border-radius:6px; font-weight:600; margin-top:4px; display:inline-block; }
-  .stage-defect { color:#ef4444; font-size:11px; margin-top:4px; }
+  .stage-qty-tag { font-size:13px; color:#64748b; background:#f8fafc; padding:2px 8px; border-radius:6px; font-weight:600; margin-top:4px; display:inline-block; }
+  .stage-defect { color:#ef4444; font-size:13px; margin-top:4px; }
   .stage-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
-  .stage-btn { border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer; transition:opacity .15s; }
+  .stage-btn { border:none; border-radius:8px; padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer; transition:opacity .15s; }
   .stage-btn:active { opacity:.75; }
   .stage-btn.transfer { background:#eff6ff; color:#2563eb; }
   .stage-btn.complete { background:#dcfce7; color:#16a34a; }
@@ -247,12 +247,12 @@
   .stage-card-dot { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; background:#f1f5f9; color:#94a3b8; border:2px solid #e2e8f0; position:relative; z-index:1; }
   .stage-card.done .stage-card-dot { background:#22c55e; color:#fff; border-color:#22c55e; }
   .stage-card.active .stage-card-dot { background:#2563eb; color:#fff; border-color:#2563eb; }
-  .stage-card-op { font-size:12px; font-weight:700; color:#1e293b; line-height:1.25; }
-  .stage-card .stage-tech, .stage-card .stage-dates { font-size:11px; }
+  .stage-card-op { font-size:14px; font-weight:700; color:#1e293b; line-height:1.25; }
+  .stage-card .stage-tech, .stage-card .stage-dates { font-size:13px; }
   .stage-card .stage-dates .red { color:#dc2626; font-weight:700; }
   .stage-card .stage-actions { flex-direction:column; }
   .stage-card .stage-btn { width:100%; text-align:center; }
-  .stage-card.active .stage-btn.complete { font-size:13px; padding:10px 12px; font-weight:800; }
+  .stage-card.active .stage-btn.complete { font-size:15px; padding:10px 12px; font-weight:800; }
   .add-stage-form { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px; margin-top:12px; display:none; flex-direction:column; gap:8px; }
   .stage-form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .stage-form-input { width:100%; border:1.5px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none; background:#fff; }
@@ -313,9 +313,9 @@
 
   /* ── СКИДКА (инлайн-редактирование) ── */
   .discount-wrap { display:flex; align-items:center; gap:6px; }
-  .discount-input { width:62px; border:1.5px solid #e2e8f0; border-radius:8px; padding:4px 8px; font-size:14px; font-weight:700; color:#1e293b; outline:none; text-align:center; transition:border .15s; }
+  .discount-input { width:62px; border:1.5px solid #e2e8f0; border-radius:8px; padding:4px 8px; font-size:16px; font-weight:700; color:#1e293b; outline:none; text-align:center; transition:border .15s; }
   .discount-input:focus { border-color:#2563eb; }
-  .discount-pct { font-size:14px; font-weight:700; color:#1e293b; }
+  .discount-pct { font-size:16px; font-weight:700; color:#1e293b; }
   .discount-save { background:#2563eb; color:#fff; border:none; border-radius:8px; padding:5px 11px; font-size:12px; font-weight:700; cursor:pointer; display:none; }
   .discount-input:focus ~ .discount-save { display:inline-block; }
   .discount-badge { background:#fef3c7; color:#d97706; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:4px; }
@@ -323,14 +323,14 @@
   /* ── СООБЩЕНИЯ ── */
   .msg-item { background:#f8fafc; border-radius:12px; padding:12px; margin-bottom:8px; }
   .msg-meta { display:flex; justify-content:space-between; margin-bottom:6px; }
-  .msg-from { font-size:12px; font-weight:700; color:#2563eb; }
-  .msg-time { font-size:11px; color:#94a3b8; }
-  .msg-text { font-size:13px; color:#334155; line-height:1.5; margin-bottom:6px; }
+  .msg-from { font-size:14px; font-weight:700; color:#2563eb; }
+  .msg-time { font-size:13px; color:#94a3b8; }
+  .msg-text { font-size:15px; color:#334155; line-height:1.5; margin-bottom:6px; }
   .tg-badge { background:#29b6f6; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; font-weight:800; }
   .comment-form { display:flex; gap:8px; margin-top:10px; }
-  .comment-form input { flex:1; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; font-size:14px; outline:none; }
+  .comment-form input { flex:1; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; font-size:16px; outline:none; }
   .comment-form input:focus { border-color:#2563eb; }
-  .comment-form button { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer; }
+  .comment-form button { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:16px; font-weight:700; cursor:pointer; }
 
   /* ── ДАШБОРД ── */
   .dash-header { background:linear-gradient(135deg,#1e293b,#334155); color:#fff; border-radius:16px; padding:20px; margin-bottom:16px; }
@@ -466,7 +466,7 @@
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Техник</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:13px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Врач <span style="color:#ef4444">*</span></div>
@@ -474,7 +474,7 @@
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Керамист</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:13px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
@@ -486,7 +486,7 @@
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Цвет зубов</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:13px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Скидка</div>
@@ -494,7 +494,7 @@
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Система импл.</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:13px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Общая сумма</div>
@@ -1132,7 +1132,7 @@ function renderDetail(o) {
       <div class="order-field-lbl">Скидка</div>
       <div class="order-field-val">
         ${isAdmin ? `<input class="discount-input" id="disc-${o.id}" type="number" min="0" max="100" value="${disc}" style="width:42px;padding:2px 4px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px" onblur="saveDiscount('${o.id}')"> %` : disc + ' %'}
-        <span style="font-size:11px;color:#94a3b8">${disc > 0 ? '−'+disc+'%' : 'Не предоставляется'}</span>
+        <span style="font-size:13px;color:#94a3b8">${disc > 0 ? '−'+disc+'%' : 'Не предоставляется'}</span>
       </div>
     </div>
     <div class="order-field">
