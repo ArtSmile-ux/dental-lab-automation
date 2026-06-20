@@ -102,7 +102,7 @@
   .dv.red { color:#dc2626; }
   .status-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
   /* ── НОВЫЙ ДИЗАЙН ДЕТАЛЕЙ ── */
-  .order-hdr { background:#1e293b; color:#fff; padding:16px; margin:-16px -16px 0; border-radius:0; position:relative; z-index:0; }
+  .order-hdr { background:#1e293b; color:#fff; padding:16px; margin:0 -16px 0; border-radius:0; position:relative; z-index:0; }
   .order-hdr-top { display:flex; justify-content:space-between; align-items:center; }
   .order-hdr-num { font-size:17px; font-weight:800; }
   .order-hdr-date { font-size:12px; color:#94a3b8; margin-top:2px; }
@@ -120,12 +120,12 @@
   .lab-item:not(.disabled)::before { content:'★'; font-size:11px; color:#f59e0b; }
   .lab-item.disabled { color:#cbd5e1; cursor:default; }
   .lab-item.disabled::before { content:'○'; font-size:11px; color:#e2e8f0; }
-  .order-actions { display:flex; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid #e2e8f0; margin-bottom:12px; }
+  .order-actions { display:flex; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid #e2e8f0; margin-bottom:12px; position:relative; }
   .btn-action { padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:12px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap; }
   .btn-action:hover { background:#f8fafc; }
   .btn-action.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
   .btn-action.green { background:#16a34a; color:#fff; border-color:#16a34a; }
-  .btn-action.purple { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+  .btn-action.purple { background:#7c3aed; color:#fff; border-color:#7c3aed; position:absolute; left:50%; top:12px; }
   .order-fields-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:12px; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
   .order-field { padding:10px 14px; border-bottom:1px solid #f1f5f9; display:flex; flex-direction:column; gap:2px; }
   .order-field:nth-child(odd) { border-right:1px solid #f1f5f9; }
@@ -888,7 +888,7 @@ function renderDetail(o) {
     <button class="btn-action" onclick="showDetail('${o.id}')">Записать</button>
     <button class="btn-action" onclick="printNZ('${o.id}')">🖨 Печать НЗ</button>
     ${isAdmin ? `<button class="btn-action green" onclick="createAct('${o.id}')">Выписать акт</button>` : ''}
-    ${isAdmin ? `<button class="btn-action purple" onclick="autoDistribute('${o.id}')">💎 Авто-распределить</button>` : ''}
+    ${isAdmin ? `<button class="btn-action purple" onclick="autoDistribute('${o.id}')">Авто-распределить</button>` : ''}
   </div>`;
 
   // ── ПОЛЯ ──
