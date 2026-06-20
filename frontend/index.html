@@ -433,27 +433,35 @@
 
   <!-- ЭКРАН: СОЗДАТЬ ЗАКАЗ -->
   <div class="screen" id="screen-create">
-    <div class="form-section">
-      <div class="form-section-title">Новый заказ</div>
+    <button class="back-btn" onclick="showOrders()">← Назад</button>
+    <div class="order-hdr" style="margin-bottom:12px">
+      <div class="order-hdr-top">
+        <div class="order-hdr-num">Новый наряд-заказ</div>
+      </div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Пациент <span style="color:#ef4444">*</span></label>
+    <div class="order-fields-grid">
+      <div class="order-field">
+        <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
         <input class="form-input" id="f-patient" placeholder="Иванов И.И." autocomplete="off">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Клиника <span style="color:#ef4444">*</span></label>
-          <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" list="clinic-datalist" autocomplete="off">
-          <datalist id="clinic-datalist"></datalist>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Врач <span style="color:#ef4444">*</span></label>
-          <input class="form-input" id="f-doctor" placeholder="Соколов К.Д." autocomplete="off">
-        </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Техник <span style="color:#ef4444">*</span></div>
+        <select class="form-input" id="f-tech">
+          <option value="">Загрузка...</option>
+        </select>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">Вид работы <span style="color:#ef4444">*</span></label>
+      <div class="order-field">
+        <div class="order-field-lbl">Клиника <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" list="clinic-datalist" autocomplete="off">
+        <datalist id="clinic-datalist"></datalist>
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Врач <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-doctor" placeholder="Соколов К.Д." autocomplete="off">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Вид работы <span style="color:#ef4444">*</span></div>
         <input class="form-input" id="f-work" list="work-types" placeholder="Металлокерамика" autocomplete="off">
         <datalist id="work-types">
           <option value="Металлокерамика">
@@ -466,63 +474,45 @@
           <option value="Временные коронки">
         </datalist>
       </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Единиц</label>
-          <input class="form-input" id="f-units" type="number" min="1" max="32" value="1">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Зубы <span style="color:#ef4444">*</span></label>
-          <input class="form-input" id="f-teeth" placeholder="14, 15, 16" autocomplete="off">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Описание / цвет</label>
-        <input class="form-input" id="f-desc" placeholder="Цвет A2, особые пожелания..." autocomplete="off">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Техник <span style="color:#ef4444">*</span></label>
-        <select class="form-input" id="f-tech">
-          <option value="">Загрузка...</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Приоритет</label>
+      <div class="order-field">
+        <div class="order-field-lbl">Приоритет</div>
         <select class="form-input" id="f-priority">
           <option value="высокий">Высокий</option>
           <option value="средний" selected>Средний</option>
           <option value="низкий">Низкий</option>
         </select>
       </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Сумма (₽)</label>
-          <input class="form-input" id="f-total" type="number" min="0" step="100" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Скидка (%)</label>
-          <input class="form-input" id="f-discount" type="number" min="0" max="100" step="1" placeholder="0" value="0">
-        </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Единиц</div>
+        <input class="form-input" id="f-units" type="number" min="1" max="32" value="1">
       </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Сдать до <span style="color:#ef4444">*</span></label>
-          <input class="form-input" id="f-deadline" type="datetime-local">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Приём пациента</label>
-          <input class="form-input" id="f-appt" type="datetime-local">
-        </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Зубы <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-teeth" placeholder="14, 15, 16" autocomplete="off">
       </div>
-
-      <button class="btn-primary" id="btn-create" onclick="submitOrder()">Создать заказ</button>
+      <div class="order-field">
+        <div class="order-field-lbl">Сумма (₽)</div>
+        <input class="form-input" id="f-total" type="number" min="0" step="100" placeholder="0">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Скидка (%)</div>
+        <input class="form-input" id="f-discount" type="number" min="0" max="100" step="1" placeholder="0" value="0">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Сдать до <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-deadline" type="datetime-local">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Приём пациента</div>
+        <input class="form-input" id="f-appt" type="datetime-local">
+      </div>
+      <div class="order-field" style="grid-column:1/-1;border-right:none">
+        <div class="order-field-lbl">Описание / цвет</div>
+        <input class="form-input" id="f-desc" placeholder="Цвет A2, особые пожелания..." autocomplete="off">
+      </div>
     </div>
+
+    <button class="btn-primary" id="btn-create" onclick="submitOrder()">Создать заказ</button>
   </div>
 
   <!-- ЭКРАН: ДАШБОРД -->
