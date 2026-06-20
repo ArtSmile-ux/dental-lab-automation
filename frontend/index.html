@@ -11,7 +11,7 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f0f2f5; color:#1a1a1a; max-width:430px; margin:0 auto; min-height:100vh; }
   @media (min-width:768px) {
-    body, .bottom-nav, #act-print-overlay, .print-actions { max-width:100% !important; }
+    body, .bottom-nav, #act-print-overlay, .print-actions, .sticky-header { max-width:100% !important; }
     #screen-orders, #screen-detail, #screen-acts, #screen-hub,
     #screen-clinics, #screen-clinic-detail, #screen-doctors, #screen-bank, #screen-lab { padding: 0 40px calc(100px + env(safe-area-inset-bottom)); }
     .orders-list { display:block; }
@@ -44,7 +44,13 @@
   .login-error { color:#f87171; font-size:13px; margin-top:12px; min-height:20px; }
 
   /* ── НАВИГАЦИЯ ── */
-  .top-bar { background:#fff; border-bottom:1px solid #e2e8f0; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+  .sticky-header { position:sticky; top:0; z-index:50; background:#fff; max-width:430px; margin:0 auto; }
+  .top-bar { background:#fff; border-bottom:1px solid #e2e8f0; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .tab-bar { display:none; overflow-x:auto; background:#f1f5f9; border-bottom:1px solid #e2e8f0; -webkit-overflow-scrolling:touch; }
+  .app-tab { display:inline-flex; align-items:center; gap:6px; padding:9px 12px; font-size:12px; font-weight:600; color:#64748b; white-space:nowrap; cursor:pointer; border-right:1px solid #e2e8f0; }
+  .app-tab.active { background:#fff; color:#2563eb; }
+  .app-tab-close { color:#94a3b8; font-size:13px; line-height:1; padding:1px 4px; border-radius:4px; }
+  .app-tab-close:hover { background:#e2e8f0; color:#334155; }
   .top-bar-title { font-size:16px; font-weight:700; }
   .top-bar-sub { font-size:12px; color:#64748b; margin-top:1px; }
   .btn-logout { background:none; border:none; color:#94a3b8; font-size:13px; cursor:pointer; padding:4px 8px; }
@@ -415,12 +421,15 @@
 
 <!-- ПРИЛОЖЕНИЕ -->
 <div id="app" style="display:none">
-  <div class="top-bar">
-    <div>
-      <div class="top-bar-title" id="top-name">Мои заказы</div>
-      <div class="top-bar-sub" id="top-sub"></div>
+  <div class="sticky-header">
+    <div class="top-bar">
+      <div>
+        <div class="top-bar-title" id="top-name">Мои заказы</div>
+        <div class="top-bar-sub" id="top-sub"></div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Выйти</button>
     </div>
-    <button class="btn-logout" onclick="logout()">Выйти</button>
+    <div class="tab-bar" id="tab-bar"></div>
   </div>
 
   <!-- ЭКРАН: ЗАКАЗЫ -->
@@ -705,6 +714,85 @@ function setNav(active) {
   });
   const el = document.getElementById(active);
   if (el) el.classList.add('active');
+  const activeScreen = document.querySelector('.screen.active');
+  if (activeScreen) registerTab(activeScreen.id);
+}
+
+// ── ВКЛАДКИ СВЕРХУ ───────────────────────────────────────────────────────────
+const SCREEN_TAB_LABELS = {
+  'screen-lab': 'Лаборатория',
+  'screen-orders': 'Заказы',
+  'screen-messages': 'Сообщения',
+  'screen-dashboard': 'Дашборд',
+  'screen-bank': 'Банк',
+  'screen-acts': 'Акты',
+  'screen-settings': 'Настройки',
+  'screen-create': 'Новый заказ',
+};
+const SCREEN_OPENERS = {
+  'screen-lab': () => showLab(),
+  'screen-orders': () => showOrders(),
+  'screen-messages': () => showMessages(),
+  'screen-dashboard': () => showDashboard(),
+  'screen-bank': () => showBank(),
+  'screen-acts': () => showActs(),
+  'screen-settings': () => showSettings(),
+  'screen-create': () => showCreate(),
+};
+let tabs = [];
+let activeTabKey = null;
+
+function registerTab(screenId) {
+  let key, label, orderId = null;
+  if (screenId === 'screen-detail' && currentOrderId) {
+    key = 'order-' + currentOrderId;
+    label = currentOrderId;
+    orderId = currentOrderId;
+  } else if (SCREEN_TAB_LABELS[screenId]) {
+    key = screenId;
+    label = SCREEN_TAB_LABELS[screenId];
+  } else {
+    return;
+  }
+  if (!tabs.find(t => t.key === key)) tabs.push({ key, label, screenId, orderId });
+  activeTabKey = key;
+  renderTabs();
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tab-bar');
+  if (!bar) return;
+  if (tabs.length <= 1) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = tabs.map(t => `
+    <span class="app-tab${t.key===activeTabKey?' active':''}" onclick="switchTab('${t.key}')">
+      <span>${t.label}</span>
+      <span class="app-tab-close" onclick="event.stopPropagation();closeTab('${t.key}')">×</span>
+    </span>`).join('');
+}
+
+function switchTab(key) {
+  const t = tabs.find(x => x.key === key);
+  if (!t) return;
+  if (t.screenId === 'screen-detail') { showDetail(t.orderId); return; }
+  if (t.screenId === 'screen-create') {
+    // не вызываем showCreate() повторно, чтобы не сбросить черновик заказа
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-create').classList.add('active');
+    setNav('bnav-create');
+    return;
+  }
+  SCREEN_OPENERS[t.screenId]?.();
+}
+
+function closeTab(key) {
+  const idx = tabs.findIndex(t => t.key === key);
+  if (idx === -1) return;
+  const wasActive = activeTabKey === key;
+  tabs.splice(idx, 1);
+  if (!wasActive) { renderTabs(); return; }
+  const next = tabs[idx] || tabs[idx - 1];
+  if (next) switchTab(next.key); else showOrders();
 }
 
 // ── PIN ───────────────────────────────────────────────────────────────────────
@@ -738,6 +826,7 @@ async function doLogin() {
 }
 function logout() {
   localStorage.clear(); currentUser = null; pin = '';
+  tabs = []; activeTabKey = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
   updateDots();
@@ -749,6 +838,7 @@ function startApp() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('top-name').textContent = currentUser.name;
   document.getElementById('top-sub').textContent = currentUser.city || '';
+  setNav('bnav-orders');
   loadNomenclature();
   if (currentUser.role === 'admin') {
     document.getElementById('bnav-create').style.display = 'flex';
