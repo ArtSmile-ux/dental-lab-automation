@@ -143,6 +143,8 @@
   .items-table th { padding:8px 6px; text-align:left; font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; border-bottom:2px solid #f1f5f9; }
   .items-table td { padding:9px 6px; border-bottom:1px solid #f8fafc; color:#334155; vertical-align:middle; }
   .items-table tr:last-child td { border-bottom:none; }
+  th .col-resize-handle, .items-table th .col-resize-handle { position:absolute; top:0; right:-3px; width:6px; height:100%; cursor:col-resize; z-index:2; touch-action:none; }
+  th .col-resize-handle:hover, th .col-resize-handle:active { background:rgba(37,99,235,.3); }
   .td-del { color:#ef4444; background:none; border:none; cursor:pointer; font-size:16px; padding:0 4px; }
   .td-check { width:22px; height:22px; border-radius:50%; border:2px solid #cbd5e1; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
   .td-check.done { background:#22c55e; border-color:#22c55e; color:#fff; font-size:12px; }
@@ -758,6 +760,49 @@ async function loadOrders() {
   } catch { document.getElementById('orders-content').innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
 }
 
+// ── ИЗМЕНЯЕМАЯ ШИРИНА КОЛОНОК ТАБЛИЦ ───────────────────────────────────────────
+function initResizableTable(table, storageKey) {
+  if (!table) return;
+  const ths = table.querySelectorAll('thead th');
+  if (!ths.length) return;
+  table.style.tableLayout = 'fixed';
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('colw-' + storageKey) || '{}'); } catch { /* ignore */ }
+  ths.forEach((th, i) => {
+    if (saved[i]) th.style.width = saved[i] + 'px';
+    else if (!th.style.width) th.style.width = th.offsetWidth + 'px';
+    th.style.position = 'relative';
+    if (i === ths.length - 1) return;
+    const handle = document.createElement('div');
+    handle.className = 'col-resize-handle';
+    th.appendChild(handle);
+    let startX = 0, startWidth = 0;
+    const onMove = e => {
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      th.style.width = Math.max(40, startWidth + (x - startX)) + 'px';
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      saved[i] = th.offsetWidth;
+      localStorage.setItem('colw-' + storageKey, JSON.stringify(saved));
+    };
+    const onDown = e => {
+      e.preventDefault(); e.stopPropagation();
+      startX = e.touches ? e.touches[0].clientX : e.clientX;
+      startWidth = th.offsetWidth;
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.addEventListener('touchmove', onMove, {passive:false});
+      document.addEventListener('touchend', onUp);
+    };
+    handle.addEventListener('mousedown', onDown);
+    handle.addEventListener('touchstart', onDown, {passive:false});
+  });
+}
+
 function renderOrders() {
   if (currentUser.role === 'admin') {
     renderAdminTable();
@@ -849,6 +894,7 @@ function renderAdminTable() {
   </div>`;
 
   document.getElementById('orders-content').innerHTML = summary + filters + table;
+  initResizableTable(document.querySelector('#orders-content table'), 'orders-list');
 }
 
 function renderTechCards() {
@@ -905,6 +951,7 @@ function showDetail(id) {
   document.getElementById('screen-detail').classList.add('active');
   setNav('');
   document.getElementById('detail-content').innerHTML = renderDetail(o);
+  initResizableTable(document.querySelector('#detail-content .items-table'), 'order-items-detail');
 }
 
 function renderDetail(o) {
