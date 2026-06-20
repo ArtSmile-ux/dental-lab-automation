@@ -122,7 +122,7 @@
   .lab-item.disabled::before { content:'○'; font-size:11px; color:#e2e8f0; }
   .order-actions { display:flex; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid #e2e8f0; margin-bottom:12px; position:relative; }
   .btn-action { padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:12px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap; }
-  .btn-action:disabled { opacity:.4; cursor:not-allowed; }
+  .btn-action:disabled { opacity:.85; cursor:not-allowed; }
   .btn-action:hover { background:#f8fafc; }
   .btn-action.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
   .btn-action.green { background:#16a34a; color:#fff; border-color:#16a34a; }
@@ -451,54 +451,6 @@
       <button class="btn-action purple" disabled>Авто-распределить</button>
     </div>
 
-    <div class="detail-card" style="margin-bottom:12px">
-      <div class="form-section-title">Параметры заказа</div>
-      <div class="form-group">
-        <label class="form-label">Вид работы <span style="color:#ef4444">*</span></label>
-        <input class="form-input" id="f-work" list="work-types" placeholder="Металлокерамика" autocomplete="off">
-        <datalist id="work-types">
-          <option value="Металлокерамика">
-          <option value="Циркониевая коронка">
-          <option value="Имплант-коронка циркониевая">
-          <option value="Съёмный протез">
-          <option value="Акриловая коронка">
-          <option value="Виниры">
-          <option value="Бюгельный протез">
-          <option value="Временные коронки">
-        </datalist>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Единиц</label>
-          <input class="form-input" id="f-units" type="number" min="1" max="32" value="1">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Зубы <span style="color:#ef4444">*</span></label>
-          <input class="form-input" id="f-teeth" placeholder="14, 15, 16" autocomplete="off">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Техник <span style="color:#ef4444">*</span></label>
-          <select class="form-input" id="f-tech">
-            <option value="">Загрузка...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Сдать до <span style="color:#ef4444">*</span></label>
-          <input class="form-input" id="f-deadline" type="datetime-local">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Приоритет</label>
-        <select class="form-input" id="f-priority">
-          <option value="высокий">Высокий</option>
-          <option value="средний" selected>Средний</option>
-          <option value="низкий">Низкий</option>
-        </select>
-      </div>
-    </div>
-
     <div class="order-fields-grid">
       <div class="order-field">
         <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
@@ -655,6 +607,7 @@ let currentOrderId = null;
 let techniciansList = [];
 let nomenclature = [];
 let draftItems = [];
+let draftMeta = null;
 let filterTech = '';
 let filterClinic = '';
 let filterStatus = '';
@@ -1676,12 +1629,80 @@ async function showCreate() {
   document.getElementById('btn-create').disabled = false;
   document.getElementById('btn-create').textContent = 'Создать заказ';
   draftItems = [];
+  draftMeta = null;
   renderDraftItems();
   document.getElementById('draft-add-item-wrap').style.display = 'none';
   if (!nomenclature.length) await loadNomenclature();
   const nomSel = document.getElementById('draft-nom-sel');
   if (nomSel) nomSel.innerHTML = `<option value="">— Выберите изделие —</option>` +
     nomenclature.map(n => `<option value="${n.id}">${n.article} — ${n.name} (${Number(n.price).toLocaleString('ru')} ₽)</option>`).join('');
+  showCreateMetaModal();
+}
+
+function showCreateMetaModal() {
+  const modal = document.createElement('div');
+  modal.className = 'bank-modal-overlay';
+  modal.id = 'create-meta-modal';
+  const techOpts = techniciansList.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  modal.innerHTML = `
+    <div class="bank-modal">
+      <h3>Новый наряд-заказ</h3>
+      <p>Эти данные нужны для создания — дальше останется заполнить карточку заказа.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
+        <input id="cm-work" class="form-input" list="cm-work-types" placeholder="Вид работы *" autocomplete="off">
+        <datalist id="cm-work-types">
+          <option value="Металлокерамика">
+          <option value="Циркониевая коронка">
+          <option value="Имплант-коронка циркониевая">
+          <option value="Съёмный протез">
+          <option value="Акриловая коронка">
+          <option value="Виниры">
+          <option value="Бюгельный протез">
+          <option value="Временные коронки">
+        </datalist>
+        <div class="form-row">
+          <input id="cm-units" class="form-input" type="number" min="1" max="32" value="1" placeholder="Единиц">
+          <input id="cm-teeth" class="form-input" placeholder="Зубы * (14, 15, 16)" autocomplete="off">
+        </div>
+        <select id="cm-tech" class="form-input">
+          <option value="">— Техник * —</option>${techOpts}
+        </select>
+        <select id="cm-priority" class="form-input">
+          <option value="высокий">Приоритет: высокий</option>
+          <option value="средний" selected>Приоритет: средний</option>
+          <option value="низкий">Приоритет: низкий</option>
+        </select>
+        <input id="cm-deadline" class="form-input" type="datetime-local" placeholder="Сдать до *">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-primary" style="flex:1" onclick="confirmCreateMeta()">Далее</button>
+        <button class="btn-secondary" onclick="cancelCreateMeta()">Отмена</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function cancelCreateMeta() {
+  document.getElementById('create-meta-modal')?.remove();
+  showOrders();
+}
+
+function confirmCreateMeta() {
+  const work = document.getElementById('cm-work').value.trim();
+  const units = parseInt(document.getElementById('cm-units').value) || 1;
+  const teeth = document.getElementById('cm-teeth').value.trim();
+  const techId = document.getElementById('cm-tech').value;
+  const priority = document.getElementById('cm-priority').value;
+  const deadline = document.getElementById('cm-deadline').value;
+
+  const missing = [[work,'Вид работы'],[teeth,'Зубы'],[techId,'Техник'],[deadline,'Сдать до']]
+    .filter(([v]) => !v).map(([,n]) => n);
+  if (missing.length) {
+    showToast('Не заполнено: ' + missing.join(', '), 3000);
+    return;
+  }
+  draftMeta = { work, units, teeth, techId, priority, deadline };
+  document.getElementById('create-meta-modal')?.remove();
 }
 
 function renderDraftItems() {
@@ -1734,17 +1755,13 @@ function addDraftItem() {
 }
 
 async function submitOrder() {
+  if (!draftMeta) { showToast('Сначала заполните вид работы, зубы, техника и срок', 3000); showCreateMetaModal(); return; }
   const get = id => document.getElementById(id).value.trim();
   const patient  = get('f-patient');
   const clinic   = get('f-clinic');
   const doctor   = get('f-doctor');
-  const work     = get('f-work');
-  const units    = parseInt(document.getElementById('f-units').value) || 1;
-  const teeth    = get('f-teeth');
+  const { work, units, teeth, techId, priority, deadline } = draftMeta;
   const desc     = '';
-  const techId   = get('f-tech');
-  const priority = get('f-priority');
-  const deadline = get('f-deadline');
   const appt     = get('f-appt');
   const total    = parseFloat(document.getElementById('f-total').value) || 0;
   const discount = parseFloat(document.getElementById('f-discount').value) || 0;
@@ -1753,10 +1770,6 @@ async function submitOrder() {
     [patient,  'Пациент'],
     [clinic,   'Клиника'],
     [doctor,   'Врач'],
-    [work,     'Вид работы'],
-    [teeth,    'Зубы'],
-    [techId,   'Техник'],
-    [deadline, 'Сдать до'],
   ];
   const missing = required.filter(([v]) => !v).map(([,n]) => n);
   if (missing.length) {
@@ -1797,12 +1810,12 @@ async function submitOrder() {
     const idx = orders.findIndex(x => x.id === order.id);
     if (idx >= 0) orders[idx] = order; else orders.unshift(order);
     draftItems = [];
+    draftMeta = null;
     // Reset form
-    ['f-patient','f-clinic','f-doctor','f-work','f-teeth','f-deadline','f-appt']
+    ['f-patient','f-clinic','f-doctor','f-appt']
       .forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('f-discount').value = 0;
     document.getElementById('f-total').value = '';
-    document.getElementById('f-units').value = 1;
     showToast(`Заказ создан: ${order.id}`);
     showDetail(order.id);
   } catch {
