@@ -439,13 +439,11 @@
 
   <!-- ЭКРАН: ДЕТАЛИ ЗАКАЗА -->
   <div class="screen" id="screen-detail">
-    <button class="back-btn" onclick="showOrders()">← Назад</button>
     <div id="detail-content"></div>
   </div>
 
   <!-- ЭКРАН: СОЗДАТЬ ЗАКАЗ -->
   <div class="screen" id="screen-create">
-    <button class="back-btn" onclick="showOrders()">← Назад</button>
     <div class="order-hdr" style="margin-bottom:12px">
       <div class="order-hdr-top">
         <div class="order-hdr-num">Новый наряд-заказ</div>
@@ -453,7 +451,7 @@
     </div>
 
     <div class="order-actions">
-      <button class="btn-action primary" id="btn-create" onclick="submitOrder()">Создать заказ</button>
+      <button class="btn-action primary" id="btn-create" onclick="submitOrder()">Провести и закрыть</button>
       <button class="btn-action" disabled>Записать</button>
       <button class="btn-action" disabled>🖨 Печать НЗ</button>
       <button class="btn-action green" disabled>Выписать акт</button>
@@ -1756,7 +1754,7 @@ async function showCreate() {
   document.getElementById('screen-create').classList.add('active');
   setNav('bnav-create');
   document.getElementById('btn-create').disabled = false;
-  document.getElementById('btn-create').textContent = 'Создать заказ';
+  document.getElementById('btn-create').textContent = 'Провести и закрыть';
   draftItems = [];
   renderDraftItems();
   document.getElementById('draft-add-item-wrap').style.display = 'none';
@@ -1890,7 +1888,7 @@ async function submitOrder() {
   } catch {
     showToast('Ошибка при создании заказа');
     btn.disabled = false;
-    btn.textContent = 'Создать заказ';
+    btn.textContent = 'Провести и закрыть';
   }
 }
 
