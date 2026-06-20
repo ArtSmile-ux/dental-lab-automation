@@ -13,7 +13,7 @@
   @media (min-width:768px) {
     body, .bottom-nav, #act-print-overlay, .print-actions { max-width:100% !important; }
     #screen-orders, #screen-detail, #screen-acts, #screen-hub,
-    #screen-clinics, #screen-clinic-detail, #screen-doctors, #screen-bank, #screen-lab { padding: 0 40px; }
+    #screen-clinics, #screen-clinic-detail, #screen-doctors, #screen-bank, #screen-lab { padding: 0 40px calc(100px + env(safe-area-inset-bottom)); }
     .orders-list { display:block; }
     .order-card { margin-bottom:8px; }
     .section-title { grid-column: 1/-1; }
