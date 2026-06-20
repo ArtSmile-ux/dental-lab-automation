@@ -122,6 +122,7 @@
   .lab-item.disabled::before { content:'○'; font-size:11px; color:#e2e8f0; }
   .order-actions { display:flex; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid #e2e8f0; margin-bottom:12px; position:relative; }
   .btn-action { padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#fff; font-size:12px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap; }
+  .btn-action:disabled { opacity:.4; cursor:not-allowed; }
   .btn-action:hover { background:#f8fafc; }
   .btn-action.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
   .btn-action.green { background:#16a34a; color:#fff; border-color:#16a34a; }
@@ -444,30 +445,16 @@
 
     <div class="order-actions">
       <button class="btn-action primary" id="btn-create" onclick="submitOrder()">Создать заказ</button>
+      <button class="btn-action" disabled>Записать</button>
+      <button class="btn-action" disabled>🖨 Печать НЗ</button>
+      <button class="btn-action green" disabled>Выписать акт</button>
+      <button class="btn-action purple" disabled>Авто-распределить</button>
     </div>
 
-    <div class="order-fields-grid">
-      <div class="order-field">
-        <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
-        <input class="form-input" id="f-patient" placeholder="Иванов И.И." autocomplete="off">
-      </div>
-      <div class="order-field">
-        <div class="order-field-lbl">Техник <span style="color:#ef4444">*</span></div>
-        <select class="form-input" id="f-tech">
-          <option value="">Загрузка...</option>
-        </select>
-      </div>
-      <div class="order-field">
-        <div class="order-field-lbl">Клиника <span style="color:#ef4444">*</span></div>
-        <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" list="clinic-datalist" autocomplete="off">
-        <datalist id="clinic-datalist"></datalist>
-      </div>
-      <div class="order-field">
-        <div class="order-field-lbl">Врач <span style="color:#ef4444">*</span></div>
-        <input class="form-input" id="f-doctor" placeholder="Соколов К.Д." autocomplete="off">
-      </div>
-      <div class="order-field">
-        <div class="order-field-lbl">Вид работы <span style="color:#ef4444">*</span></div>
+    <div class="detail-card" style="margin-bottom:12px">
+      <div class="form-section-title">Параметры заказа</div>
+      <div class="form-group">
+        <label class="form-label">Вид работы <span style="color:#ef4444">*</span></label>
         <input class="form-input" id="f-work" list="work-types" placeholder="Металлокерамика" autocomplete="off">
         <datalist id="work-types">
           <option value="Металлокерамика">
@@ -480,41 +467,79 @@
           <option value="Временные коронки">
         </datalist>
       </div>
-      <div class="order-field">
-        <div class="order-field-lbl">Приоритет</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Единиц</label>
+          <input class="form-input" id="f-units" type="number" min="1" max="32" value="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Зубы <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="f-teeth" placeholder="14, 15, 16" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Техник <span style="color:#ef4444">*</span></label>
+          <select class="form-input" id="f-tech">
+            <option value="">Загрузка...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Сдать до <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="f-deadline" type="datetime-local">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Приоритет</label>
         <select class="form-input" id="f-priority">
           <option value="высокий">Высокий</option>
           <option value="средний" selected>Средний</option>
           <option value="низкий">Низкий</option>
         </select>
       </div>
+    </div>
+
+    <div class="order-fields-grid">
       <div class="order-field">
-        <div class="order-field-lbl">Единиц</div>
-        <input class="form-input" id="f-units" type="number" min="1" max="32" value="1">
+        <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-patient" placeholder="Иванов И.И." autocomplete="off">
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Зубы <span style="color:#ef4444">*</span></div>
-        <input class="form-input" id="f-teeth" placeholder="14, 15, 16" autocomplete="off">
+        <div class="order-field-lbl">Керамист</div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Сумма (₽)</div>
-        <input class="form-input" id="f-total" type="number" min="0" step="100" placeholder="0">
+        <div class="order-field-lbl">Клиника <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" list="clinic-datalist" autocomplete="off">
+        <datalist id="clinic-datalist"></datalist>
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Скидка (%)</div>
+        <div class="order-field-lbl">Моделировщик</div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Врач <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-doctor" placeholder="Соколов К.Д." autocomplete="off">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Дата приёма</div>
+        <input class="form-input" id="f-appt" type="datetime-local">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Цвет зубов</div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Скидка</div>
         <input class="form-input" id="f-discount" type="number" min="0" max="100" step="1" placeholder="0" value="0">
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Сдать до <span style="color:#ef4444">*</span></div>
-        <input class="form-input" id="f-deadline" type="datetime-local">
+        <div class="order-field-lbl">Система импл.</div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Приём пациента</div>
-        <input class="form-input" id="f-appt" type="datetime-local">
-      </div>
-      <div class="order-field" style="grid-column:1/-1;border-right:none">
-        <div class="order-field-lbl">Описание / цвет</div>
-        <input class="form-input" id="f-desc" placeholder="Цвет A2, особые пожелания..." autocomplete="off">
+        <div class="order-field-lbl">Общая сумма</div>
+        <input class="form-input" id="f-total" type="number" min="0" step="100" placeholder="0">
       </div>
     </div>
 
@@ -1716,7 +1741,7 @@ async function submitOrder() {
   const work     = get('f-work');
   const units    = parseInt(document.getElementById('f-units').value) || 1;
   const teeth    = get('f-teeth');
-  const desc     = get('f-desc');
+  const desc     = '';
   const techId   = get('f-tech');
   const priority = get('f-priority');
   const deadline = get('f-deadline');
@@ -1773,8 +1798,10 @@ async function submitOrder() {
     if (idx >= 0) orders[idx] = order; else orders.unshift(order);
     draftItems = [];
     // Reset form
-    ['f-patient','f-clinic','f-doctor','f-work','f-teeth','f-desc','f-deadline','f-appt']
+    ['f-patient','f-clinic','f-doctor','f-work','f-teeth','f-deadline','f-appt']
       .forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('f-discount').value = 0;
+    document.getElementById('f-total').value = '';
     document.getElementById('f-units').value = 1;
     showToast(`Заказ создан: ${order.id}`);
     showDetail(order.id);
