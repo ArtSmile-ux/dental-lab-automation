@@ -460,14 +460,6 @@
 
     <div class="order-fields-grid">
       <div class="order-field">
-        <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
-        <input class="form-input" id="f-patient" placeholder="Иванов И.И." autocomplete="off">
-      </div>
-      <div class="order-field">
-        <div class="order-field-lbl">Керамист</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
-      </div>
-      <div class="order-field">
         <div class="order-field-lbl">Клиника <span style="color:#ef4444">*</span></div>
         <input class="form-input" id="f-clinic" placeholder="Дентал Плюс" list="clinic-datalist" autocomplete="off">
         <datalist id="clinic-datalist"></datalist>
@@ -483,6 +475,14 @@
       <div class="order-field">
         <div class="order-field-lbl">Дата приёма</div>
         <input class="form-input" id="f-appt" type="datetime-local">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Пациент <span style="color:#ef4444">*</span></div>
+        <input class="form-input" id="f-patient" placeholder="Иванов И.И." autocomplete="off">
+      </div>
+      <div class="order-field">
+        <div class="order-field-lbl">Керамист</div>
+        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:11px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Цвет зубов</div>
@@ -1101,14 +1101,6 @@ function renderDetail(o) {
   const fieldsGrid = `
   <div class="order-fields-grid">
     <div class="order-field">
-      <div class="order-field-lbl">Пациент</div>
-      <div class="order-field-val">${o.patient_name||'—'} ${chg('patient_name','Пациент',o.patient_name)}</div>
-    </div>
-    <div class="order-field">
-      <div class="order-field-lbl">Керамист</div>
-      <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Керамист',o.ceramist)}</div>
-    </div>
-    <div class="order-field">
       <div class="order-field-lbl">Клиника</div>
       <div class="order-field-val">${o.clinic_name||'—'} ${chg('clinic_name','Клиника',o.clinic_name)}</div>
     </div>
@@ -1123,6 +1115,14 @@ function renderDetail(o) {
     <div class="order-field">
       <div class="order-field-lbl">Дата приёма</div>
       <div class="order-field-val"><span class="${apptColor}">${apptVal}</span> ${chg('appointment_at','Дата приёма',o.appointment_at)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Пациент</div>
+      <div class="order-field-val">${o.patient_name||'—'} ${chg('patient_name','Пациент',o.patient_name)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Керамист</div>
+      <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Керамист',o.ceramist)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Цвет зубов</div>
