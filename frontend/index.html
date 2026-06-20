@@ -1220,8 +1220,7 @@ function renderDetail(o) {
     <div class="stage-actions">
       ${!s.transferred_at&&!s.actual_date?`<button class="stage-btn transfer" onclick="transferStage('${o.id}',${s.id})">▶ В работу</button>`:''}
       ${s.transferred_at&&!s.actual_date?`<button class="stage-btn complete" onclick="completeStage('${o.id}',${s.id})">✓ Завершить</button>`:''}
-      ${s.transferred_at&&!s.actual_date?`<button class="stage-btn revert" onclick="revertStage('${o.id}',${s.id})">↩ Откатить</button>`:''}
-      <button class="stage-btn del-stage" onclick="deleteStage('${o.id}',${s.id})">× Удалить</button>
+      ${(s.transferred_at||s.actual_date)?`<button class="stage-btn revert" onclick="revertStage('${o.id}',${s.id})">↩ Откатить</button>`:''}
     </div>` : '';
     return `<div class="stage-card ${cls}">
       <div class="stage-card-top"><div class="stage-card-dot">${dot}</div><div class="stage-card-op">${s.operation}</div></div>
@@ -1494,7 +1493,11 @@ async function revertStage(orderId, stageId) {
   try {
     const o = orders.find(x => x.id === orderId);
     const sIdx = (o?.stages || []).findIndex(s => s.id === stageId);
-    const prevId = sIdx > 0 ? o.stages[sIdx - 1].id : null;
+    const s = sIdx >= 0 ? o.stages[sIdx] : null;
+    // откат предыдущего этапа имеет смысл только когда откатываем "В работу" -> "Ожидает";
+    // откат завершённого этапа ("Готово" -> "В работе") не должен трогать соседние этапы
+    const wasActive = s && s.transferred_at && !s.actual_date;
+    const prevId = wasActive && sIdx > 0 ? o.stages[sIdx - 1].id : null;
     let data = await (await fetch(`${API}/orders/${orderId}/stages/${stageId}/revert`, {
       method: 'PATCH', headers: {'x-pin':localStorage.getItem('pin')}
     })).json();
@@ -1505,7 +1508,7 @@ async function revertStage(orderId, stageId) {
     }
     const idx = orders.findIndex(x => x.id === orderId);
     if (idx >= 0) orders[idx] = data.order;
-    showToast('Откат на предыдущий этап выполнен');
+    showToast('Откат выполнен');
     showDetail(orderId);
   } catch { showToast('Ошибка'); }
 }
