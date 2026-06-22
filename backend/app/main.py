@@ -174,20 +174,19 @@ def init_db():
         "ALTER TABLE orders ADD COLUMN ceramist TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN modeler TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN implant_system TEXT DEFAULT ''",
-        "ALTER TABLE technicians ADD COLUMN specialization TEXT DEFAULT 'technician'",
+        "ALTER TABLE technicians ADD COLUMN specialization TEXT DEFAULT ''",
         "ALTER TABLE technicians ADD COLUMN load_percent REAL DEFAULT 0",
     ]:
         try:
             c.execute(col_sql)
+            if col_sql.startswith("ALTER TABLE technicians ADD COLUMN specialization"):
+                # Первичная расстановка направлений — только при первом создании
+                # колонки, чтобы не затирать ручные правки из экрана «Техники»
+                # при каждом перезапуске сервера.
+                c.execute("UPDATE technicians SET specialization='technician' WHERE name IN ('Мурад','Ильяс')")
+                c.execute("UPDATE technicians SET specialization='modeler' WHERE name IN ('Магомед','Асадуллах')")
         except Exception:
             pass
-
-    # Направление: Магомед и Асадуллах — моделировщики, остальные — техники
-    c.execute("UPDATE technicians SET specialization='modeler' WHERE name IN ('Магомед','Асадуллах')")
-    c.execute(
-        "UPDATE technicians SET specialization='technician' "
-        "WHERE role='technician' AND name NOT IN ('Магомед','Асадуллах')"
-    )
 
     # Если % нагрузки внутри направления ещё не выставлен вручную — распределить поровну
     for spec in ('technician', 'modeler'):
@@ -739,8 +738,8 @@ def update_technician(tech_id: str, data: TechnicianUpdate, tech=Depends(get_tec
     if not conn.execute("SELECT id FROM technicians WHERE id=?", (tech_id,)).fetchone():
         raise HTTPException(status_code=404, detail="Техник не найден")
     if data.specialization is not None:
-        if data.specialization not in ('technician', 'modeler'):
-            raise HTTPException(status_code=400, detail="Направление должно быть 'technician' или 'modeler'")
+        if data.specialization not in ('technician', 'modeler', ''):
+            raise HTTPException(status_code=400, detail="Направление должно быть 'technician', 'modeler' или ''")
         conn.execute("UPDATE technicians SET specialization=? WHERE id=?", (data.specialization, tech_id))
     if data.load_percent is not None:
         if not (0 <= data.load_percent <= 100):

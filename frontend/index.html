@@ -2073,7 +2073,7 @@ function showTechniciansRef() {
     .then(r => r.json())
     .then(data => {
       techniciansRefList = data.technicians;
-      const group = (spec, title) => {
+      const group = (spec, title, showPercent) => {
         const items = techniciansRefList.filter(t => t.specialization === spec);
         const sum = items.reduce((s, t) => s + (t.load_percent || 0), 0);
         const rows = items.map(t => `
@@ -2081,24 +2081,27 @@ function showTechniciansRef() {
             <div style="font-weight:600;font-size:14px">${t.name}</div>
             <div style="display:flex;align-items:center;gap:8px">
               <select class="form-input" style="width:160px" onchange="changeTechSpecialization('${t.id}', this.value)">
+                <option value="" ${t.specialization===''?'selected':''}>Без направления</option>
                 <option value="technician" ${t.specialization==='technician'?'selected':''}>Техник</option>
                 <option value="modeler" ${t.specialization==='modeler'?'selected':''}>Моделировщик</option>
               </select>
+              ${showPercent ? `
               <input class="form-input" style="width:80px" type="number" min="0" max="100" step="1"
                 value="${t.load_percent || 0}" onchange="changeTechLoadPercent('${t.id}', this.value)">
-              <span style="font-size:13px;color:#94a3b8">%</span>
+              <span style="font-size:13px;color:#94a3b8">%</span>` : ''}
             </div>
           </div>`).join('');
         return `
           <div class="section-title" style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px">
             <span>${title} (${items.length})</span>
-            <span style="font-size:12px;color:${sum===100?'#16a34a':'#ef4444'}">Сумма: ${sum}%</span>
+            ${showPercent ? `<span style="font-size:12px;color:${sum===100?'#16a34a':'#ef4444'}">Сумма: ${sum}%</span>` : ''}
           </div>
           ${rows || '<div style="color:#94a3b8;font-size:14px">Никого нет</div>'}`;
       };
       content.innerHTML = `${backBtn}<div class="section-title">Техники (${techniciansRefList.length})</div>
-        ${group('technician', 'Техник')}
-        ${group('modeler', 'Моделировщик')}`;
+        ${group('technician', 'Техник', true)}
+        ${group('modeler', 'Моделировщик', true)}
+        ${group('', 'Без направления', false)}`;
     })
     .catch(() => { content.innerHTML = backBtn + '<div class="loading-text">Ошибка загрузки</div>'; });
 }
