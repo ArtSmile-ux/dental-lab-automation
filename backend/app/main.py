@@ -174,11 +174,33 @@ def init_db():
         "ALTER TABLE orders ADD COLUMN ceramist TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN modeler TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN implant_system TEXT DEFAULT ''",
+        "ALTER TABLE technicians ADD COLUMN specialization TEXT DEFAULT 'technician'",
+        "ALTER TABLE technicians ADD COLUMN load_percent REAL DEFAULT 0",
     ]:
         try:
             c.execute(col_sql)
         except Exception:
             pass
+
+    # Направление: Магомед и Асадуллах — моделировщики, остальные — техники
+    c.execute("UPDATE technicians SET specialization='modeler' WHERE name IN ('Магомед','Асадуллах')")
+    c.execute(
+        "UPDATE technicians SET specialization='technician' "
+        "WHERE role='technician' AND name NOT IN ('Магомед','Асадуллах')"
+    )
+
+    # Если % нагрузки внутри направления ещё не выставлен вручную — распределить поровну
+    for spec in ('technician', 'modeler'):
+        rows = c.execute(
+            "SELECT id FROM technicians WHERE specialization=? AND role != 'admin'", (spec,)
+        ).fetchall()
+        already_set = c.execute(
+            "SELECT 1 FROM technicians WHERE specialization=? AND role != 'admin' AND load_percent>0", (spec,)
+        ).fetchone()
+        if rows and not already_set:
+            even_share = round(100 / len(rows), 2)
+            for row in rows:
+                c.execute("UPDATE technicians SET load_percent=? WHERE id=?", (even_share, row[0]))
 
     if not c.execute("SELECT COUNT(*) FROM technicians").fetchone()[0]:
         c.executemany("INSERT INTO technicians VALUES (?,?,?,?,?)", [
@@ -405,6 +427,10 @@ class OrderFieldUpdate(BaseModel):
     field: str
     value: str
 
+class TechnicianUpdate(BaseModel):
+    specialization: Optional[str] = None
+    load_percent: Optional[float] = None
+
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
@@ -483,6 +509,30 @@ def update_order_field(order_id: str, data: OrderFieldUpdate, tech=Depends(get_t
     conn.commit()
     return {"success": True, "order": _fetch_order(conn, order_id)}
 
+def _pick_least_loaded(conn, specialization, order_field, exclude_order_id):
+    """Выбрать техника направления, чья текущая загрузка (Σ units заказов в статусе
+    'в_работе') сильнее всего отстаёт от его целевой доли — заданной % нагрузки."""
+    techs = conn.execute(
+        "SELECT id, name, load_percent FROM technicians WHERE specialization=? AND role != 'admin'",
+        (specialization,)
+    ).fetchall()
+    if not techs:
+        return None
+    loads = {}
+    for t in techs:
+        loads[t["name"]] = conn.execute(
+            f"SELECT COALESCE(SUM(units),0) FROM orders WHERE status='в_работе' AND {order_field}=? AND id!=?",
+            (t["name"], exclude_order_id)
+        ).fetchone()[0]
+    total_load = sum(loads.values())
+
+    def deficit(t):
+        target = total_load * (t["load_percent"] / 100) if total_load > 0 else t["load_percent"]
+        return target - loads[t["name"]]
+
+    best = max(techs, key=lambda t: (deficit(t), t["load_percent"]))
+    return best["name"]
+
 @app.post("/orders/{order_id}/auto-distribute")
 def auto_distribute(order_id: str, tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
@@ -490,11 +540,12 @@ def auto_distribute(order_id: str, tech=Depends(get_tech), conn=Depends(db)):
     order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
     if not order:
         raise HTTPException(status_code=404, detail="Заказ не найден")
-    techs = conn.execute("SELECT id, name FROM technicians WHERE role='technician'").fetchall()
-    if len(techs) >= 1:
-        conn.execute("UPDATE orders SET ceramist=? WHERE id=?", (techs[0]["name"], order_id))
-    if len(techs) >= 2:
-        conn.execute("UPDATE orders SET modeler=? WHERE id=?", (techs[1]["name"], order_id))
+    modeler_name  = _pick_least_loaded(conn, 'technician', 'modeler',  order_id)
+    ceramist_name = _pick_least_loaded(conn, 'modeler',    'ceramist', order_id)
+    if modeler_name:
+        conn.execute("UPDATE orders SET modeler=? WHERE id=?", (modeler_name, order_id))
+    if ceramist_name:
+        conn.execute("UPDATE orders SET ceramist=? WHERE id=?", (ceramist_name, order_id))
     conn.commit()
     return {"success": True, "order": _fetch_order(conn, order_id)}
 
@@ -667,11 +718,38 @@ def add_comment(order_id: str, data: CommentAdd, tech=Depends(get_tech), conn=De
     return {"success": True, "comment": dict(c)}
 
 @app.get("/technicians")
-def get_technicians(tech=Depends(get_tech), conn=Depends(db)):
+def get_technicians(specialization: Optional[str] = None, tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Только для руководителя")
-    rows = conn.execute("SELECT id, name, city FROM technicians WHERE role != 'admin'").fetchall()
+    if specialization:
+        rows = conn.execute(
+            "SELECT id, name, city, specialization, load_percent FROM technicians "
+            "WHERE role != 'admin' AND specialization=?", (specialization,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT id, name, city, specialization, load_percent FROM technicians WHERE role != 'admin'"
+        ).fetchall()
     return {"technicians": [dict(r) for r in rows]}
+
+@app.patch("/technicians/{tech_id}")
+def update_technician(tech_id: str, data: TechnicianUpdate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if not conn.execute("SELECT id FROM technicians WHERE id=?", (tech_id,)).fetchone():
+        raise HTTPException(status_code=404, detail="Техник не найден")
+    if data.specialization is not None:
+        if data.specialization not in ('technician', 'modeler'):
+            raise HTTPException(status_code=400, detail="Направление должно быть 'technician' или 'modeler'")
+        conn.execute("UPDATE technicians SET specialization=? WHERE id=?", (data.specialization, tech_id))
+    if data.load_percent is not None:
+        if not (0 <= data.load_percent <= 100):
+            raise HTTPException(status_code=400, detail="Процент должен быть от 0 до 100")
+        conn.execute("UPDATE technicians SET load_percent=? WHERE id=?", (data.load_percent, tech_id))
+    conn.commit()
+    return {"success": True, "technician": dict(conn.execute(
+        "SELECT id, name, city, specialization, load_percent FROM technicians WHERE id=?", (tech_id,)
+    ).fetchone())}
 
 @app.get("/acts")
 def get_acts(tech=Depends(get_tech), conn=Depends(db)):

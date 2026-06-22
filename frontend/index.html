@@ -473,7 +473,7 @@
         <input class="form-input" id="f-doctor" placeholder="Соколов К.Д." autocomplete="off">
       </div>
       <div class="order-field">
-        <div class="order-field-lbl">Керамист</div>
+        <div class="order-field-lbl">Моделировщик</div>
         <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:13px;color:#94a3b8">после создания</span></div>
       </div>
       <div class="order-field">
@@ -1113,8 +1113,8 @@ function renderDetail(o) {
       <div class="order-field-val">${o.doctor_name||'—'} ${chg('doctor_name','Врач',o.doctor_name)}</div>
     </div>
     <div class="order-field">
-      <div class="order-field-lbl">Керамист</div>
-      <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Керамист',o.ceramist)}</div>
+      <div class="order-field-lbl">Моделировщик</div>
+      <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Моделировщик',o.ceramist)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Пациент</div>
@@ -1732,7 +1732,7 @@ function showMessages() {
 // ── СОЗДАНИЕ ЗАКАЗА (только для admin) ────────────────────────────────────────
 async function loadTechniciansForForm() {
   try {
-    const r = await fetch(`${API}/technicians`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const r = await fetch(`${API}/technicians?specialization=technician`, {headers:{'x-pin': localStorage.getItem('pin')}});
     const data = await r.json();
     techniciansList = data.technicians;
     const sel = document.getElementById('f-tech');
@@ -1953,7 +1953,7 @@ async function renderLab() {
         ['Клиники', 'showClinics()', isAdmin],
         ['Номенклатура', "showSettings();showSettingsTab('prices')", isAdmin],
         ['Врачи', '', false],
-        ['Техники', '', false],
+        ['Техники', 'showTechniciansRef()', isAdmin],
         ['Имплантаты', '', false],
         ['Цвет зубов', '', false],
         ['Материалы', '', false],
@@ -2060,6 +2060,79 @@ async function deleteClinic(clinicId) {
     await renderLab();
     loadClinicsForForm();
   } catch { showToast('Ошибка удаления'); }
+}
+
+// ── ТЕХНИКИ (направления и % нагрузки) ─────────────────────────────────────────
+let techniciansRefList = [];
+
+function showTechniciansRef() {
+  const content = document.getElementById('lab-content');
+  content.innerHTML = '<div class="loading-text">Загрузка...</div>';
+  const backBtn = `<button onclick="renderLab()" style="background:none;border:none;color:#2563eb;font-size:14px;cursor:pointer;padding:0 0 12px;display:block">← Назад</button>`;
+  fetch(`${API}/technicians`, {headers:{'x-pin': localStorage.getItem('pin')}})
+    .then(r => r.json())
+    .then(data => {
+      techniciansRefList = data.technicians;
+      const group = (spec, title) => {
+        const items = techniciansRefList.filter(t => t.specialization === spec);
+        const sum = items.reduce((s, t) => s + (t.load_percent || 0), 0);
+        const rows = items.map(t => `
+          <div class="detail-card" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div style="font-weight:600;font-size:14px">${t.name}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select class="form-input" style="width:160px" onchange="changeTechSpecialization('${t.id}', this.value)">
+                <option value="technician" ${t.specialization==='technician'?'selected':''}>Техник</option>
+                <option value="modeler" ${t.specialization==='modeler'?'selected':''}>Моделировщик</option>
+              </select>
+              <input class="form-input" style="width:80px" type="number" min="0" max="100" step="1"
+                value="${t.load_percent || 0}" onchange="changeTechLoadPercent('${t.id}', this.value)">
+              <span style="font-size:13px;color:#94a3b8">%</span>
+            </div>
+          </div>`).join('');
+        return `
+          <div class="section-title" style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px">
+            <span>${title} (${items.length})</span>
+            <span style="font-size:12px;color:${sum===100?'#16a34a':'#ef4444'}">Сумма: ${sum}%</span>
+          </div>
+          ${rows || '<div style="color:#94a3b8;font-size:14px">Никого нет</div>'}`;
+      };
+      content.innerHTML = `${backBtn}<div class="section-title">Техники (${techniciansRefList.length})</div>
+        ${group('technician', 'Техник')}
+        ${group('modeler', 'Моделировщик')}`;
+    })
+    .catch(() => { content.innerHTML = backBtn + '<div class="loading-text">Ошибка загрузки</div>'; });
+}
+
+async function changeTechSpecialization(techId, specialization) {
+  try {
+    const r = await fetch(`${API}/technicians/${techId}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json','x-pin': localStorage.getItem('pin')},
+      body: JSON.stringify({specialization})
+    });
+    if (!r.ok) throw new Error();
+    showToast('Направление обновлено');
+  } catch { showToast('Ошибка сохранения'); }
+  showTechniciansRef();
+}
+
+async function changeTechLoadPercent(techId, value) {
+  const load_percent = Number(value);
+  if (Number.isNaN(load_percent) || load_percent < 0 || load_percent > 100) {
+    showToast('Процент должен быть от 0 до 100');
+    showTechniciansRef();
+    return;
+  }
+  try {
+    const r = await fetch(`${API}/technicians/${techId}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json','x-pin': localStorage.getItem('pin')},
+      body: JSON.stringify({load_percent})
+    });
+    if (!r.ok) throw new Error();
+    showToast('% нагрузки обновлён');
+  } catch { showToast('Ошибка сохранения'); }
+  showTechniciansRef();
 }
 
 // ── АЛЬФА-БАНК ────────────────────────────────────────────────────────────────
