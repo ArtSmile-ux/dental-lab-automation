@@ -1646,27 +1646,60 @@ function closeActPrint() {
 }
 
 // ── ЦЕНЫ НОМЕНКЛАТУРЫ ─────────────────────────────────────────────────────────
+let currentPriceClinic = '';
+let nomenclatureView = [];
+
 async function loadPricesScreen() {
+  if (!clinicsList.length) await loadClinicsForForm();
+  await loadPriceItems();
+}
+
+async function loadPriceItems() {
   const el = document.getElementById('prices-content');
-  if (!nomenclature.length) await loadNomenclature();
-  renderPrices();
+  el.innerHTML = '<div class="loading-text">Загрузка...</div>';
+  try {
+    const url = currentPriceClinic
+      ? `${API}/nomenclature?clinic_name=${encodeURIComponent(currentPriceClinic)}`
+      : `${API}/nomenclature`;
+    const r = await fetch(url, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    nomenclatureView = data.items;
+    if (!currentPriceClinic) nomenclature = data.items;
+    renderPrices();
+  } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+}
+
+function changePriceClinic(name) {
+  currentPriceClinic = name;
+  loadPriceItems();
 }
 
 function renderPrices() {
   const el = document.getElementById('prices-content');
-  if (!nomenclature.length) { el.innerHTML = '<div class="loading-text">Загрузка...</div>'; return; }
-  const rows = nomenclature.map(n => `
+  if (!nomenclatureView.length) { el.innerHTML = '<div class="loading-text">Загрузка...</div>'; return; }
+  const clinicOptions = clinicsList.map(c =>
+    `<option value="${c.name}" ${currentPriceClinic===c.name?'selected':''}>${c.name}</option>`).join('');
+  const selector = `
+  <div class="detail-card" style="padding:14px;margin-bottom:10px">
+    <div class="form-label" style="margin-bottom:6px">Прайс-лист для</div>
+    <select class="form-input" onchange="changePriceClinic(this.value)">
+      <option value="">Общий прайс</option>
+      ${clinicOptions}
+    </select>
+  </div>`;
+  const rows = nomenclatureView.map(n => `
   <div class="price-row">
     <span class="price-art">${n.article}</span>
-    <span class="price-name">${n.name}</span>
+    <span class="price-name">${n.name}${n.is_override ? ' <span class="discount-badge" style="margin-left:4px">своя цена</span>' : ''}</span>
     <input class="price-input" type="number" min="0" step="100" value="${n.price}"
            onblur="savePrice(${n.id}, this.value)"
            onkeydown="if(event.key==='Enter'){this.blur()}">
     <span class="price-unit">₽/шт</span>
+    ${n.is_override ? `<button class="item-del" title="Сбросить на общую цену" onclick="resetClinicPrice(${n.id})">×</button>` : ''}
   </div>`).join('');
-  el.innerHTML = `
+  el.innerHTML = `${selector}
   <div class="detail-card" style="padding:14px">
-    <h3>Цены номенклатуры</h3>
+    <h3>${currentPriceClinic ? 'Цены: ' + currentPriceClinic : 'Цены номенклатуры (общий прайс)'}</h3>
     ${rows}
   </div>`;
 }
@@ -1675,17 +1708,41 @@ async function savePrice(id, rawVal) {
   const price = parseFloat(rawVal);
   if (isNaN(price) || price < 0) { showToast('Введите корректную цену', 2000); return; }
   try {
-    const r = await fetch(`${API}/nomenclature/${id}`, {
+    if (currentPriceClinic) {
+      const r = await fetch(`${API}/clinic-prices`, {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+        body: JSON.stringify({clinic_name: currentPriceClinic, nomenclature_id: id, price})
+      });
+      if (!r.ok) throw new Error();
+      showToast('Цена для клиники обновлена');
+      await loadPriceItems();
+    } else {
+      const r = await fetch(`${API}/nomenclature/${id}`, {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+        body: JSON.stringify({price})
+      });
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      const idx = nomenclature.findIndex(n => n.id === id);
+      if (idx >= 0) nomenclature[idx] = data.item;
+      showToast('Цена обновлена');
+    }
+  } catch { showToast('Ошибка при сохранении цены'); }
+}
+
+async function resetClinicPrice(id) {
+  try {
+    const r = await fetch(`${API}/clinic-prices`, {
       method: 'PATCH',
       headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
-      body: JSON.stringify({price})
+      body: JSON.stringify({clinic_name: currentPriceClinic, nomenclature_id: id, price: null})
     });
     if (!r.ok) throw new Error();
-    const data = await r.json();
-    const idx = nomenclature.findIndex(n => n.id === id);
-    if (idx >= 0) nomenclature[idx] = data.item;
-    showToast('Цена обновлена');
-  } catch { showToast('Ошибка при сохранении цены'); }
+    showToast('Сброшено на общую цену');
+    await loadPriceItems();
+  } catch { showToast('Ошибка сброса'); }
 }
 
 // ── НАВИГАЦИЯ ЭКРАНОВ ─────────────────────────────────────────────────────────
@@ -1907,8 +1964,8 @@ async function renderLab() {
     <div class="lab-hub">
       ${section('Документы', [
         ['Заказы на производство', 'showOrders()', true],
-        ['Акты выполненных работ', "showSettings();showSettingsTab('acts')", isAdmin],
-        ['Установка цен номенклатуры', "showSettings();showSettingsTab('prices')", isAdmin],
+        ['Акты выполненных работ', "showActs()", isAdmin],
+        ['Установка цен номенклатуры', "showActs();showActsTab('prices')", isAdmin],
         ['Этапы производства', '', false],
         ['Встречи', '', false],
         ['Зарплата техников', '', false],
@@ -1917,7 +1974,7 @@ async function renderLab() {
       ])}
       ${section('Справочники', [
         ['Клиники', 'showClinics()', isAdmin],
-        ['Номенклатура', "showSettings();showSettingsTab('prices')", isAdmin],
+        ['Номенклатура', "showActs();showActsTab('prices')", isAdmin],
         ['Врачи', '', false],
         ['Техники', 'showTechniciansRef()', isAdmin],
         ['Имплантаты', '', false],
@@ -2243,55 +2300,16 @@ function showSettings() {
 }
 
 async function showSettingsTab(tab) {
-  if (tab === 'acts') {
-    const el = document.getElementById('settings-acts-content');
-    el.innerHTML = '<div class="loading-text">Загрузка...</div>';
-    try {
-      const r = await fetch(`${API}/acts`, {headers:{'x-pin':localStorage.getItem('pin')}});
-      const data = await r.json();
-      acts = data.acts;
-      if (!acts.length) {
-        el.innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><div>Нет актов. Выпишите акт из заказа.</div></div>`;
-      } else {
-        el.innerHTML = acts.map(a => {
-          const disc = a.discount > 0 ? `<span class="badge yellow" style="margin-left:4px">−${a.discount}%</span>` : '';
-          return `<div class="act-card" onclick="showActDetail('${a.id}')">
-            <div class="act-card-top"><span class="act-num">${a.id}</span><span class="act-date">${fmtDate(a.created_at)}</span></div>
-            <div class="act-clinic">${a.clinic_name}</div>
-            <div class="act-total">${a.total ? Number(a.total).toLocaleString('ru') + ' ₽' : '—'}${disc}</div>
-          </div>`;
-        }).join('');
-      }
-    } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
-  }
-  if (tab === 'prices') {
-    const el = document.getElementById('settings-prices-content');
-    el.innerHTML = '<div class="loading-text">Загрузка...</div>';
-    try {
-      const r = await fetch(`${API}/nomenclature`, {headers:{'x-pin':localStorage.getItem('pin')}});
-      const data = await r.json();
-      nomenclature = data.items;
-      const isAdmin = currentUser && currentUser.role === 'admin';
-      el.innerHTML = `<div class="section-title">Прайс-лист</div>` + nomenclature.map(n => `
-        <div class="detail-card" style="margin-bottom:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div><div style="font-weight:700;font-size:14px">${n.name}</div><div style="font-size:11px;color:#94a3b8">${n.article}</div></div>
-            <div style="font-weight:700;color:#2563eb">${Number(n.price).toLocaleString('ru')} ₽</div>
-          </div>
-        </div>`).join('');
-    } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
-  }
-  if (tab === 'bank') {
-    const el = document.getElementById('settings-bank-content');
-    el.innerHTML = '<div class="loading-text">Загрузка...</div>';
-    try {
-      const r = await fetch(`${API}/alfa/status`, {headers:{'x-pin':localStorage.getItem('pin')}});
-      const status = await r.json();
-      el.innerHTML = status.connected
-        ? `<div class="bank-header"><div class="bank-logo">Альфа&#8209;Банк</div><div class="bank-status connected">&#10003; Подключён</div><button class="btn-danger-sm" onclick="disconnectBank();showSettingsTab('bank')">Отключить</button></div>`
-        : `<div class="bank-header"><div class="bank-logo">Альфа&#8209;Банк</div><div class="bank-status">Не подключён</div><p class="bank-desc">Подключите счёт Альфа-Банка для просмотра транзакций.</p><button class="btn-primary" onclick="connectBank()">Подключить Альфа-Банк</button></div>`;
-    } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
-  }
+  if (tab !== 'bank') return;
+  const el = document.getElementById('settings-bank-content');
+  el.innerHTML = '<div class="loading-text">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API}/alfa/status`, {headers:{'x-pin':localStorage.getItem('pin')}});
+    const status = await r.json();
+    el.innerHTML = status.connected
+      ? `<div class="bank-header"><div class="bank-logo">Альфа&#8209;Банк</div><div class="bank-status connected">&#10003; Подключён</div><button class="btn-danger-sm" onclick="disconnectBank();showSettingsTab('bank')">Отключить</button></div>`
+      : `<div class="bank-header"><div class="bank-logo">Альфа&#8209;Банк</div><div class="bank-status">Не подключён</div><p class="bank-desc">Подключите счёт Альфа-Банка для просмотра транзакций.</p><button class="btn-primary" onclick="connectBank()">Подключить Альфа-Банк</button></div>`;
+  } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
 }
 
 // ── РЕДАКТИРОВАНИЕ ПОЛЯ ЗАКАЗА ────────────────────────────────────────────────

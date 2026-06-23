@@ -111,6 +111,13 @@ def init_db():
         price   REAL DEFAULT 0,
         unit    TEXT DEFAULT 'шт'
     );
+    CREATE TABLE IF NOT EXISTS clinic_prices (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        clinic_id       TEXT NOT NULL,
+        nomenclature_id INTEGER NOT NULL,
+        price           REAL DEFAULT 0,
+        UNIQUE(clinic_id, nomenclature_id)
+    );
     CREATE TABLE IF NOT EXISTS acts (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         act_number   TEXT NOT NULL UNIQUE,
@@ -397,6 +404,11 @@ class ActCreate(BaseModel):
 class NomUpdate(BaseModel):
     price: float
 
+class ClinicPriceUpdate(BaseModel):
+    clinic_name: str
+    nomenclature_id: int
+    price: Optional[float] = None
+
 class OrderCreate(BaseModel):
     patient_name:  str
     clinic_name:   str
@@ -569,9 +581,50 @@ def update_discount(order_id: str, data: DiscountUpdate, tech=Depends(get_tech),
     return {"success": True, "order_id": order_id, "discount": data.discount}
 
 @app.get("/nomenclature")
-def get_nomenclature(tech=Depends(get_tech), conn=Depends(db)):
+def get_nomenclature(clinic_name: Optional[str] = None, tech=Depends(get_tech), conn=Depends(db)):
     rows = conn.execute("SELECT * FROM nomenclature ORDER BY article").fetchall()
-    return {"items": [dict(r) for r in rows]}
+    items = [dict(r) for r in rows]
+    if clinic_name:
+        clinic = conn.execute("SELECT id FROM clinics WHERE name=?", (clinic_name,)).fetchone()
+        overrides = {}
+        if clinic:
+            overrides = {
+                r["nomenclature_id"]: r["price"] for r in conn.execute(
+                    "SELECT nomenclature_id, price FROM clinic_prices WHERE clinic_id=?", (clinic["id"],)
+                ).fetchall()
+            }
+        for it in items:
+            if it["id"] in overrides:
+                it["price"] = overrides[it["id"]]
+                it["is_override"] = True
+            else:
+                it["is_override"] = False
+    return {"items": items}
+
+@app.patch("/clinic-prices")
+def set_clinic_price(data: ClinicPriceUpdate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if not conn.execute("SELECT id FROM nomenclature WHERE id=?", (data.nomenclature_id,)).fetchone():
+        raise HTTPException(status_code=404, detail="Позиция номенклатуры не найдена")
+    clinic = conn.execute("SELECT id FROM clinics WHERE name=?", (data.clinic_name,)).fetchone()
+    if not clinic:
+        raise HTTPException(status_code=404, detail="Клиника не найдена")
+    if data.price is None:
+        conn.execute(
+            "DELETE FROM clinic_prices WHERE clinic_id=? AND nomenclature_id=?",
+            (clinic["id"], data.nomenclature_id)
+        )
+    else:
+        if data.price < 0:
+            raise HTTPException(status_code=400, detail="Цена не может быть отрицательной")
+        conn.execute(
+            "INSERT INTO clinic_prices (clinic_id, nomenclature_id, price) VALUES (?,?,?) "
+            "ON CONFLICT(clinic_id, nomenclature_id) DO UPDATE SET price=excluded.price",
+            (clinic["id"], data.nomenclature_id, data.price)
+        )
+    conn.commit()
+    return {"success": True}
 
 @app.post("/orders/{order_id}/items")
 def add_order_item(order_id: str, data: OrderItemAdd, tech=Depends(get_tech), conn=Depends(db)):
