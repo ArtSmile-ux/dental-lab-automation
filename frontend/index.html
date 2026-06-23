@@ -1646,11 +1646,38 @@ function closeActPrint() {
 }
 
 // ── ЦЕНЫ НОМЕНКЛАТУРЫ ─────────────────────────────────────────────────────────
-let currentPriceClinic = '';
+let currentPriceClinic = null;   // null = список прайс-листов, '' = общий, иначе имя клиники
 let nomenclatureView = [];
+let priceClinicsList = [];
 
 async function loadPricesScreen() {
-  if (!clinicsList.length) await loadClinicsForForm();
+  currentPriceClinic = null;
+  const el = document.getElementById('prices-content');
+  el.innerHTML = '<div class="loading-text">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API}/clinic-prices/clinics`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    priceClinicsList = data.clinics;
+    renderPriceLists();
+  } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+}
+
+function renderPriceLists() {
+  const el = document.getElementById('prices-content');
+  const rows = priceClinicsList.map(name => `
+    <div class="detail-card" style="margin-bottom:8px;cursor:pointer" onclick="openPriceList('${name.replace(/'/g, "\\'")}')">
+      <div style="font-weight:700;font-size:14px">${name}</div>
+    </div>`).join('');
+  el.innerHTML = `
+    <div class="section-title">Прайс-листы</div>
+    <div class="detail-card" style="margin-bottom:8px;cursor:pointer" onclick="openPriceList('')">
+      <div style="font-weight:700;font-size:14px">Общий прайс</div>
+    </div>
+    ${rows}`;
+}
+
+async function openPriceList(name) {
+  currentPriceClinic = name;
   await loadPriceItems();
 }
 
@@ -1669,24 +1696,10 @@ async function loadPriceItems() {
   } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
 }
 
-function changePriceClinic(name) {
-  currentPriceClinic = name;
-  loadPriceItems();
-}
-
 function renderPrices() {
   const el = document.getElementById('prices-content');
   if (!nomenclatureView.length) { el.innerHTML = '<div class="loading-text">Загрузка...</div>'; return; }
-  const clinicOptions = clinicsList.map(c =>
-    `<option value="${c.name}" ${currentPriceClinic===c.name?'selected':''}>${c.name}</option>`).join('');
-  const selector = `
-  <div class="detail-card" style="padding:14px;margin-bottom:10px">
-    <div class="form-label" style="margin-bottom:6px">Прайс-лист для</div>
-    <select class="form-input" onchange="changePriceClinic(this.value)">
-      <option value="">Общий прайс</option>
-      ${clinicOptions}
-    </select>
-  </div>`;
+  const backBtn = `<button onclick="loadPricesScreen()" style="background:none;border:none;color:#2563eb;font-size:14px;cursor:pointer;padding:0 0 12px;display:block">← К списку прайс-листов</button>`;
   const rows = nomenclatureView.map(n => `
   <div class="price-row">
     <span class="price-art">${n.article}</span>
@@ -1697,7 +1710,7 @@ function renderPrices() {
     <span class="price-unit">₽/шт</span>
     ${n.is_override ? `<button class="item-del" title="Сбросить на общую цену" onclick="resetClinicPrice(${n.id})">×</button>` : ''}
   </div>`).join('');
-  el.innerHTML = `${selector}
+  el.innerHTML = `${backBtn}
   <div class="detail-card" style="padding:14px">
     <h3>${currentPriceClinic ? 'Цены: ' + currentPriceClinic : 'Цены номенклатуры (общий прайс)'}</h3>
     ${rows}

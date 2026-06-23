@@ -601,6 +601,13 @@ def get_nomenclature(clinic_name: Optional[str] = None, tech=Depends(get_tech), 
                 it["is_override"] = False
     return {"items": items}
 
+@app.get("/clinic-prices/clinics")
+def get_clinics_with_prices(tech=Depends(get_tech), conn=Depends(db)):
+    rows = conn.execute(
+        "SELECT DISTINCT c.name FROM clinic_prices cp JOIN clinics c ON c.id = cp.clinic_id ORDER BY c.name"
+    ).fetchall()
+    return {"clinics": [r["name"] for r in rows]}
+
 @app.patch("/clinic-prices")
 def set_clinic_price(data: ClinicPriceUpdate, tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
