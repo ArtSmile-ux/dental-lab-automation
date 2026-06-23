@@ -589,14 +589,13 @@
   <div class="screen" id="screen-settings">
     <div id="settings-bank-content"><div class="loading-text">Загрузка...</div></div>
   </div>
-  <!-- ЭКРАН: АКТЫ И ЦЕНЫ -->
+  <!-- ЭКРАН: АКТЫ -->
   <div class="screen" id="screen-acts">
-    <div class="sub-nav">
-      <button class="sub-nav-btn active" id="subnav-acts" onclick="showActsTab('acts')">Акты</button>
-      <button class="sub-nav-btn" id="subnav-prices" onclick="showActsTab('prices')">Прайс-лист</button>
-    </div>
     <div id="acts-content"><div class="loading-text">Загрузка...</div></div>
-    <div id="prices-content" style="display:none"></div>
+  </div>
+  <!-- ЭКРАН: ЦЕНЫ НОМЕНКЛАТУРЫ -->
+  <div class="screen" id="screen-prices">
+    <div id="prices-content"><div class="loading-text">Загрузка...</div></div>
   </div>
 
   <div class="bottom-nav" id="bottom-nav">
@@ -714,6 +713,7 @@ const SCREEN_TAB_LABELS = {
   'screen-dashboard': 'Дашборд',
   'screen-bank': 'Банк',
   'screen-acts': 'Акты',
+  'screen-prices': 'Прайс-лист',
   'screen-settings': 'Настройки',
   'screen-create': 'Новый заказ',
 };
@@ -723,6 +723,7 @@ const SCREEN_OPENERS = {
   'screen-dashboard': () => showDashboard(),
   'screen-bank': () => showBank(),
   'screen-acts': () => showActs(),
+  'screen-prices': () => showPrices(),
   'screen-settings': () => showSettings(),
   'screen-create': () => showCreate(),
 };
@@ -1525,16 +1526,15 @@ async function showActs() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-acts').classList.add('active');
   setNav('bnav-acts');
-  showActsTab('acts');
   await loadActs();
 }
 
-function showActsTab(tab) {
-  document.getElementById('subnav-acts').classList.toggle('active', tab === 'acts');
-  document.getElementById('subnav-prices').classList.toggle('active', tab === 'prices');
-  document.getElementById('acts-content').style.display   = tab === 'acts'   ? 'block' : 'none';
-  document.getElementById('prices-content').style.display = tab === 'prices' ? 'block' : 'none';
-  if (tab === 'prices') loadPricesScreen();
+// ── ЦЕНЫ НОМЕНКЛАТУРЫ (экран) ──────────────────────────────────────────────────
+async function showPrices() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-prices').classList.add('active');
+  setNav('bnav-lab');
+  await loadPricesScreen();
 }
 
 async function loadActs() {
@@ -1978,7 +1978,7 @@ async function renderLab() {
       ${section('Документы', [
         ['Заказы на производство', 'showOrders()', true],
         ['Акты выполненных работ', "showActs()", isAdmin],
-        ['Установка цен номенклатуры', "showActs();showActsTab('prices')", isAdmin],
+        ['Установка цен номенклатуры', "showPrices()", isAdmin],
         ['Этапы производства', '', false],
         ['Встречи', '', false],
         ['Зарплата техников', '', false],
@@ -1987,7 +1987,7 @@ async function renderLab() {
       ])}
       ${section('Справочники', [
         ['Клиники', 'showClinics()', isAdmin],
-        ['Номенклатура', "showActs();showActsTab('prices')", isAdmin],
+        ['Номенклатура', "showPrices()", isAdmin],
         ['Врачи', '', false],
         ['Техники', 'showTechniciansRef()', isAdmin],
         ['Имплантаты', '', false],
