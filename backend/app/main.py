@@ -87,7 +87,15 @@ def init_db():
         planned_date   TEXT,
         actual_date    TEXT,
         defect_comment TEXT DEFAULT '',
-        amount         REAL DEFAULT 0
+        amount         REAL DEFAULT 0,
+        stage_type     TEXT DEFAULT ''
+    );
+    CREATE TABLE IF NOT EXISTS technician_rates (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        technician_id TEXT NOT NULL,
+        stage_type    TEXT NOT NULL,
+        rate          REAL DEFAULT 0,
+        UNIQUE(technician_id, stage_type)
     );
     CREATE TABLE IF NOT EXISTS comments (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -183,6 +191,7 @@ def init_db():
         "ALTER TABLE orders ADD COLUMN implant_system TEXT DEFAULT ''",
         "ALTER TABLE technicians ADD COLUMN specialization TEXT DEFAULT ''",
         "ALTER TABLE technicians ADD COLUMN load_percent REAL DEFAULT 0",
+        "ALTER TABLE order_stages ADD COLUMN stage_type TEXT DEFAULT ''",
     ]:
         try:
             c.execute(col_sql)
@@ -390,10 +399,16 @@ class OrderItemQty(BaseModel):
 
 class StageAdd(BaseModel):
     operation:    str
+    stage_type:   str
     technician_id: str
     qty:          int = 1
     planned_date: Optional[str] = None
     article:      str = ""
+
+class TechnicianRateUpdate(BaseModel):
+    technician_id: str
+    stage_type: str
+    rate: float
 
 class CommentAdd(BaseModel):
     text: str
@@ -508,6 +523,8 @@ EDITABLE_ORDER_FIELDS = {
     'deadline', 'technician_name', 'work_type', 'teeth', 'description'
 }
 
+STAGE_TYPES = ['Гипсовка', 'Гравировка', 'Моделирование', 'Фрезировка', 'Покраска']
+
 @app.patch("/orders/{order_id}/field")
 def update_order_field(order_id: str, data: OrderFieldUpdate, tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
@@ -608,6 +625,64 @@ def get_clinics_with_prices(tech=Depends(get_tech), conn=Depends(db)):
     ).fetchall()
     return {"clinics": [r["name"] for r in rows]}
 
+@app.get("/technician-rates")
+def get_technician_rates(tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    techs = conn.execute("SELECT id, name FROM technicians WHERE role='technician' ORDER BY name").fetchall()
+    rates = {
+        (r["technician_id"], r["stage_type"]): r["rate"] for r in conn.execute(
+            "SELECT technician_id, stage_type, rate FROM technician_rates"
+        ).fetchall()
+    }
+    result = [
+        {
+            "technician_id": t["id"],
+            "technician_name": t["name"],
+            "rates": {st: rates.get((t["id"], st), 0) for st in STAGE_TYPES},
+        }
+        for t in techs
+    ]
+    return {"technicians": result, "stage_types": STAGE_TYPES}
+
+@app.patch("/technician-rates")
+def set_technician_rate(data: TechnicianRateUpdate, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    if data.stage_type not in STAGE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Тип этапа должен быть одним из: {', '.join(STAGE_TYPES)}")
+    if data.rate < 0:
+        raise HTTPException(status_code=400, detail="Ставка не может быть отрицательной")
+    if not conn.execute("SELECT id FROM technicians WHERE id=?", (data.technician_id,)).fetchone():
+        raise HTTPException(status_code=404, detail="Техник не найден")
+    conn.execute(
+        "INSERT INTO technician_rates (technician_id, stage_type, rate) VALUES (?,?,?) "
+        "ON CONFLICT(technician_id, stage_type) DO UPDATE SET rate=excluded.rate",
+        (data.technician_id, data.stage_type, data.rate)
+    )
+    conn.commit()
+    return {"success": True}
+
+@app.get("/reports/salary")
+def get_salary_report(month: str, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    rows = conn.execute(
+        "SELECT technician, stage_type, qty, amount FROM order_stages "
+        "WHERE actual_date IS NOT NULL AND substr(actual_date,1,7)=?",
+        (month,)
+    ).fetchall()
+    by_tech = {}
+    for r in rows:
+        t = by_tech.setdefault(r["technician"], {"technician": r["technician"], "total": 0, "by_stage": {}})
+        t["total"] += r["amount"]
+        st = r["stage_type"] or "—"
+        stage_entry = t["by_stage"].setdefault(st, {"qty": 0, "amount": 0})
+        stage_entry["qty"] += r["qty"]
+        stage_entry["amount"] += r["amount"]
+    result = sorted(by_tech.values(), key=lambda x: -x["total"])
+    return {"month": month, "technicians": result}
+
 @app.patch("/clinic-prices")
 def set_clinic_price(data: ClinicPriceUpdate, tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
@@ -698,15 +773,24 @@ def add_stage(order_id: str, data: StageAdd, tech=Depends(get_tech), conn=Depend
         raise HTTPException(status_code=403, detail="Только для руководителя")
     if not conn.execute("SELECT id FROM orders WHERE id=?", (order_id,)).fetchone():
         raise HTTPException(status_code=404, detail="Заказ не найден")
+    if data.stage_type not in STAGE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Тип этапа должен быть одним из: {', '.join(STAGE_TYPES)}")
     tech_row = conn.execute("SELECT name FROM technicians WHERE id=?", (data.technician_id,)).fetchone()
     if not tech_row:
         raise HTTPException(status_code=400, detail="Техник не найден")
+    rate_row = conn.execute(
+        "SELECT rate FROM technician_rates WHERE technician_id=? AND stage_type=?",
+        (data.technician_id, data.stage_type)
+    ).fetchone()
+    amount = (rate_row["rate"] if rate_row else 0) * data.qty
     max_n = conn.execute(
         "SELECT COALESCE(MAX(n),0) FROM order_stages WHERE order_id=?", (order_id,)
     ).fetchone()[0]
     conn.execute(
-        "INSERT INTO order_stages (order_id,n,article,operation,qty,technician,planned_date) VALUES (?,?,?,?,?,?,?)",
-        (order_id, max_n + 1, data.article, data.operation, data.qty, tech_row["name"], data.planned_date)
+        "INSERT INTO order_stages (order_id,n,article,operation,stage_type,qty,technician,planned_date,amount) "
+        "VALUES (?,?,?,?,?,?,?,?,?)",
+        (order_id, max_n + 1, data.article, data.operation, data.stage_type,
+         data.qty, tech_row["name"], data.planned_date, amount)
     )
     conn.commit()
     return {"success": True, "order": _fetch_order(conn, order_id)}

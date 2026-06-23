@@ -597,6 +597,10 @@
   <div class="screen" id="screen-prices">
     <div id="prices-content"><div class="loading-text">Загрузка...</div></div>
   </div>
+  <!-- ЭКРАН: ЗАРПЛАТА ТЕХНИКОВ -->
+  <div class="screen" id="screen-salary">
+    <div id="salary-content"><div class="loading-text">Загрузка...</div></div>
+  </div>
 
   <div class="bottom-nav" id="bottom-nav">
     <button class="bnav-btn" id="bnav-lab" onclick="showLab()">
@@ -637,11 +641,13 @@
 
 <script>
 const API = '';
+const STAGE_TYPES = ['Гипсовка', 'Гравировка', 'Моделирование', 'Фрезировка', 'Покраска'];
 let pin = '';
 let currentUser = null;
 let orders = [];
 let currentOrderId = null;
 let techniciansList = [];
+let allTechniciansList = [];
 let nomenclature = [];
 let draftItems = [];
 let filterTech = '';
@@ -714,6 +720,7 @@ const SCREEN_TAB_LABELS = {
   'screen-bank': 'Банк',
   'screen-acts': 'Акты',
   'screen-prices': 'Прайс-лист',
+  'screen-salary': 'Зарплата техников',
   'screen-settings': 'Настройки',
   'screen-create': 'Новый заказ',
 };
@@ -722,6 +729,7 @@ const SCREEN_OPENERS = {
   'screen-orders': () => showOrders(),
   'screen-dashboard': () => showDashboard(),
   'screen-bank': () => showBank(),
+  'screen-salary': () => showSalary(),
   'screen-acts': () => showActs(),
   'screen-prices': () => showPrices(),
   'screen-settings': () => showSettings(),
@@ -1219,12 +1227,14 @@ function renderDetail(o) {
     </div>`;
   }).join('');
 
-  const techOpts = techniciansList.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  const techOpts = allTechniciansList.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  const stageTypeOpts = STAGE_TYPES.map(st=>`<option value="${st}">${st}</option>`).join('');
   const addStageForm = isAdmin ? `
   <button class="stage-toggle-btn" onclick="toggleAddStageForm('${o.id}')">+ Добавить этап</button>
   <div class="add-stage-form" id="add-stage-wrap-${o.id}">
-    <input class="stage-form-input" id="stage-op-${o.id}" list="stage-ops-${o.id}" placeholder="Операция">
-    <datalist id="stage-ops-${o.id}"><option value="Моделирование"><option value="Гипсовка"><option value="Гравировка"><option value="Нанесение керамики"><option value="Обжиг"><option value="Глазуровка"><option value="Полировка"></datalist>
+    <select class="stage-form-input" id="stage-type-${o.id}"><option value="">— Тип этапа —</option>${stageTypeOpts}</select>
+    <input class="stage-form-input" id="stage-op-${o.id}" list="stage-ops-${o.id}" placeholder="Операция (описание)">
+    <datalist id="stage-ops-${o.id}"><option value="Моделирование"><option value="Гипсовка"><option value="Гравировка"><option value="Нанесение керамики"><option value="Обжиг"><option value="Глазуровка"><option value="Полировка"><option value="Фрезировка"><option value="Покраска"></datalist>
     <div class="stage-form-row">
       <select class="stage-form-input" id="stage-tech-${o.id}"><option value="">— Техник —</option>${techOpts}</select>
       <input class="stage-form-input" id="stage-qty-${o.id}" type="number" min="1" max="99" value="1">
@@ -1419,17 +1429,19 @@ function toggleAddStageForm(orderId) {
 }
 
 async function addStage(orderId) {
+  const stageType = document.getElementById(`stage-type-${orderId}`)?.value;
   const op      = document.getElementById(`stage-op-${orderId}`)?.value.trim();
   const techId  = document.getElementById(`stage-tech-${orderId}`)?.value;
   const qty     = parseInt(document.getElementById(`stage-qty-${orderId}`)?.value) || 1;
   const planned = document.getElementById(`stage-date-${orderId}`)?.value || null;
+  if (!stageType) { showToast('Выберите тип этапа', 2000); return; }
   if (!op)     { showToast('Укажите операцию', 2000); return; }
   if (!techId) { showToast('Выберите техника', 2000); return; }
   try {
     const r = await fetch(`${API}/orders/${orderId}/stages`, {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
-      body: JSON.stringify({operation: op, technician_id: techId, qty, planned_date: planned, article: ''})
+      body: JSON.stringify({operation: op, stage_type: stageType, technician_id: techId, qty, planned_date: planned, article: ''})
     });
     if (!r.ok) { const e = await r.json(); showToast(e.detail || 'Ошибка', 2500); return; }
     const data = await r.json();
@@ -1535,6 +1547,98 @@ async function showPrices() {
   document.getElementById('screen-prices').classList.add('active');
   setNav('bnav-lab');
   await loadPricesScreen();
+}
+
+// ── ЗАРПЛАТА ТЕХНИКОВ ─────────────────────────────────────────────────────────
+let salaryMonth = new Date().toISOString().slice(0, 7);
+
+async function showSalary() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-salary').classList.add('active');
+  setNav('bnav-lab');
+  await loadSalaryScreen();
+}
+
+async function loadSalaryScreen() {
+  const el = document.getElementById('salary-content');
+  el.innerHTML = '<div class="loading-text">Загрузка...</div>';
+  try {
+    const [ratesResp, reportResp] = await Promise.all([
+      fetch(`${API}/technician-rates`, {headers:{'x-pin': localStorage.getItem('pin')}}),
+      fetch(`${API}/reports/salary?month=${salaryMonth}`, {headers:{'x-pin': localStorage.getItem('pin')}}),
+    ]);
+    const rates = await ratesResp.json();
+    const report = await reportResp.json();
+    renderSalary(rates.technicians, report.technicians);
+  } catch { el.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+}
+
+function changeSalaryMonth(value) {
+  salaryMonth = value;
+  loadSalaryScreen();
+}
+
+function renderSalary(rateRows, reportRows) {
+  const el = document.getElementById('salary-content');
+  const rateTable = `
+  <div class="detail-card" style="padding:14px;margin-bottom:10px;overflow-x:auto">
+    <h3>Ставки за этап (₽ за единицу)</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 4px">Техник</th>
+        ${STAGE_TYPES.map(st => `<th style="padding:6px 4px;white-space:nowrap">${st}</th>`).join('')}
+      </tr></thead>
+      <tbody>
+        ${rateRows.map(t => `
+        <tr>
+          <td style="padding:6px 4px;font-weight:600;white-space:nowrap">${t.technician_name}</td>
+          ${STAGE_TYPES.map(st => `
+          <td style="padding:4px">
+            <input class="price-input" style="width:80px" type="number" min="0" step="50"
+              value="${t.rates[st]}"
+              onblur="saveTechRate('${t.technician_id}','${st}', this.value)"
+              onkeydown="if(event.key==='Enter'){this.blur()}">
+          </td>`).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
+  const totalAll = reportRows.reduce((s, t) => s + t.total, 0);
+  const reportCards = reportRows.map(t => `
+    <div class="detail-card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700;font-size:14px">${t.technician}</div>
+        <div style="font-weight:700;color:#2563eb">${Number(t.total).toLocaleString('ru')} ₽</div>
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-top:6px">
+        ${Object.entries(t.by_stage).map(([st, v]) => `${st}: ${v.qty} ед. · ${Number(v.amount).toLocaleString('ru')} ₽`).join(' &nbsp;|&nbsp; ')}
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    ${rateTable}
+    <div class="detail-card" style="padding:14px;margin-bottom:10px">
+      <div class="form-label" style="margin-bottom:6px">Отчёт за месяц</div>
+      <input class="form-input" type="month" value="${salaryMonth}" onchange="changeSalaryMonth(this.value)">
+    </div>
+    <div class="section-title">Итого по техникам — ${Number(totalAll).toLocaleString('ru')} ₽</div>
+    ${reportCards || '<div style="color:#94a3b8;font-size:14px">Нет завершённых этапов за этот месяц</div>'}
+  `;
+}
+
+async function saveTechRate(technicianId, stageType, rawVal) {
+  const rate = parseFloat(rawVal);
+  if (isNaN(rate) || rate < 0) { showToast('Введите корректную ставку', 2000); return; }
+  try {
+    const r = await fetch(`${API}/technician-rates`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json','x-pin':localStorage.getItem('pin')},
+      body: JSON.stringify({technician_id: technicianId, stage_type: stageType, rate})
+    });
+    if (!r.ok) throw new Error();
+    showToast('Ставка обновлена');
+  } catch { showToast('Ошибка при сохранении ставки'); }
 }
 
 async function loadActs() {
@@ -1776,6 +1880,11 @@ async function loadTechniciansForForm() {
       `<option value="${t.id}">${t.name}</option>`
     ).join('');
   } catch { /* silent */ }
+  try {
+    const r = await fetch(`${API}/technicians`, {headers:{'x-pin': localStorage.getItem('pin')}});
+    const data = await r.json();
+    allTechniciansList = data.technicians;
+  } catch { /* silent */ }
 }
 
 async function loadClinicsForForm() {
@@ -1981,7 +2090,7 @@ async function renderLab() {
         ['Установка цен номенклатуры', "showPrices()", isAdmin],
         ['Этапы производства', '', false],
         ['Встречи', '', false],
-        ['Зарплата техников', '', false],
+        ['Зарплата техников', 'showSalary()', isAdmin],
         ['Приходные накладные', '', false],
         ['Расходные накладные', '', false],
       ])}
