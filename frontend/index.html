@@ -1137,10 +1137,6 @@ function renderDetail(o) {
       </div>
     </div>
     <div class="order-field">
-      <div class="order-field-lbl">Система импл.</div>
-      <div class="order-field-val">${o.implant_system||'—'} ${chg('implant_system','Система импл.',o.implant_system)}</div>
-    </div>
-    <div class="order-field">
       <div class="order-field-lbl">Общая сумма</div>
       <div class="order-field-val">${o.total ? Number(discountedTotal).toLocaleString('ru') + ' ₽' : '—'}</div>
     </div>
@@ -1170,12 +1166,13 @@ function renderDetail(o) {
       <td>${it.price ? Number(it.price).toLocaleString('ru')+' ₽' : '—'}</td>
       <td>${it.total ? Number(it.total).toLocaleString('ru')+' ₽' : '—'}</td>
       <td><span class="td-check${it.is_delivered?' done':''}" onclick="toggleDelivered('${o.id}',${it.id})">${it.is_delivered?'✓':''}</span></td>
+      <td><span class="td-check${it.act_issued?' done':''}" onclick="toggleActIssued('${o.id}',${it.id})">${it.act_issued?'✓':''}</span></td>
       ${isAdmin ? `<td><button class="td-del" onclick="deleteItem('${o.id}',${it.id})">×</button></td>` : '<td></td>'}
     </tr>`).join('');
 
   const addItemRow = isAdmin ? `
   <tr id="add-item-wrap-${o.id}" style="display:none">
-    <td colspan="9" style="padding:8px 0">
+    <td colspan="10" style="padding:8px 0">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <select class="add-item-select" id="nom-sel-${o.id}" style="flex:1;min-width:180px">
           <option value="">— Выберите изделие —</option>${nomOpts}
@@ -1189,15 +1186,20 @@ function renderDetail(o) {
   const itemsSection = `
   <div class="detail-card">
     <div class="items-hdr">Заказанные изделия</div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;margin:6px 0 12px;font-size:13px;color:#64748b">
+      <div>Прайс-лист: <strong style="color:#1e293b">${o.clinic_name||'—'}</strong></div>
+      <div>Импланты: <strong style="color:#1e293b">${o.implant_system||'—'}</strong> ${chg('implant_system','Импланты',o.implant_system)}</div>
+      <div>Предпочитаемый техник: <strong style="color:#1e293b">${o.preferred_technician||'—'}</strong></div>
+    </div>
     ${isAdmin ? `<button class="items-add-toggle" onclick="toggleAddForm('${o.id}')">+ Добавить изделие</button>` : ''}
     <div style="overflow-x:auto;margin-top:10px">
       <table class="items-table">
         <thead><tr>
           <th>ДАТА РЕГ.</th><th>АРТ.</th><th>ПОЗИЦИЯ ПРАЙСА</th>
-          <th>ЗУБЫ</th><th>КОЛ.</th><th>ЦЕНА</th><th>СУММА</th><th>СДАНО</th><th></th>
+          <th>ЗУБЫ</th><th>КОЛ.</th><th>ЦЕНА</th><th>СУММА</th><th>СДАНО</th><th>АКТ</th><th></th>
         </tr></thead>
         <tbody>
-          ${itemRows || `<tr><td colspan="9" style="color:#94a3b8;padding:12px 0">${o.work_type} · ${o.units} ед.${o.teeth?' · '+o.teeth:''}</td></tr>`}
+          ${itemRows || `<tr><td colspan="10" style="color:#94a3b8;padding:12px 0">${o.work_type} · ${o.units} ед.${o.teeth?' · '+o.teeth:''}</td></tr>`}
           ${addItemRow}
         </tbody>
       </table>
@@ -1356,6 +1358,21 @@ async function toggleDelivered(orderId, itemId) {
     if (o) {
       const it = o.items?.find(i => i.id === itemId);
       if (it) it.is_delivered = data.is_delivered;
+    }
+    showDetail(orderId);
+  } catch { /* silent */ }
+}
+
+async function toggleActIssued(orderId, itemId) {
+  try {
+    const r = await fetch(`${API}/orders/${orderId}/items/${itemId}/act-issued`, {
+      method:'PATCH', headers:{'x-pin':localStorage.getItem('pin')}
+    });
+    const data = await r.json();
+    const o = orders.find(x => x.id === orderId);
+    if (o) {
+      const it = o.items?.find(i => i.id === itemId);
+      if (it) it.act_issued = data.act_issued;
     }
     showDetail(orderId);
   } catch { /* silent */ }

@@ -72,7 +72,8 @@ def init_db():
         qty          INTEGER DEFAULT 1,
         price        REAL DEFAULT 0,
         total        REAL DEFAULT 0,
-        is_delivered INTEGER DEFAULT 0
+        is_delivered INTEGER DEFAULT 0,
+        act_issued   INTEGER DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS order_stages (
         id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,6 +193,7 @@ def init_db():
         "ALTER TABLE technicians ADD COLUMN specialization TEXT DEFAULT ''",
         "ALTER TABLE technicians ADD COLUMN load_percent REAL DEFAULT 0",
         "ALTER TABLE order_stages ADD COLUMN stage_type TEXT DEFAULT ''",
+        "ALTER TABLE order_items ADD COLUMN act_issued INTEGER DEFAULT 0",
     ]:
         try:
             c.execute(col_sql)
@@ -344,10 +346,11 @@ def _fetch_order(conn, order_id):
             "SELECT * FROM messages WHERE order_id=? ORDER BY time", (order_id,)).fetchall()
     ]
     items = [dict(r) for r in conn.execute(
-        "SELECT id,article,name,qty,price,total,is_delivered FROM order_items WHERE order_id=? ORDER BY id",
+        "SELECT id,article,name,qty,price,total,is_delivered,act_issued FROM order_items WHERE order_id=? ORDER BY id",
         (order_id,)).fetchall()]
     for it in items:
         it["is_delivered"] = bool(it["is_delivered"])
+        it["act_issued"] = bool(it["act_issued"])
     stages = [dict(r) for r in conn.execute(
         "SELECT id,n,article,operation,qty,technician,transferred_at,accepted_at,planned_date,actual_date,defect_comment,amount "
         "FROM order_stages WHERE order_id=? ORDER BY n",
@@ -774,6 +777,18 @@ def toggle_delivered(order_id: str, item_id: int, tech=Depends(get_tech), conn=D
     conn.execute("UPDATE order_items SET is_delivered=? WHERE id=?", (new_val, item_id))
     conn.commit()
     return {"success": True, "is_delivered": bool(new_val)}
+
+@app.patch("/orders/{order_id}/items/{item_id}/act-issued")
+def toggle_act_issued(order_id: str, item_id: int, tech=Depends(get_tech), conn=Depends(db)):
+    if tech.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Только для руководителя")
+    row = conn.execute("SELECT act_issued FROM order_items WHERE id=? AND order_id=?", (item_id, order_id)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Позиция не найдена")
+    new_val = 0 if row["act_issued"] else 1
+    conn.execute("UPDATE order_items SET act_issued=? WHERE id=?", (new_val, item_id))
+    conn.commit()
+    return {"success": True, "act_issued": bool(new_val)}
 
 @app.post("/orders/{order_id}/stages")
 def add_stage(order_id: str, data: StageAdd, tech=Depends(get_tech), conn=Depends(db)):
