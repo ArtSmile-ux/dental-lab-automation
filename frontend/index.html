@@ -1110,6 +1110,11 @@ function renderDetail(o) {
       <div class="order-field-val">${o.modeler||'—'} ${chg('modeler','Техник',o.modeler)}</div>
     </div>
     <div class="order-field">
+      <div class="order-field-lbl">Прайс-лист</div>
+      <div class="order-field-val">${o.clinic_name||'—'}</div>
+    </div>
+    <div class="order-field"></div>
+    <div class="order-field">
       <div class="order-field-lbl">Врач</div>
       <div class="order-field-val">${o.doctor_name||'—'} ${chg('doctor_name','Врач',o.doctor_name)}</div>
     </div>
@@ -1135,6 +1140,10 @@ function renderDetail(o) {
         ${isAdmin ? `<input class="discount-input" id="disc-${o.id}" type="number" min="0" max="100" value="${disc}" style="width:42px;padding:2px 4px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px" onblur="saveDiscount('${o.id}')"> %` : disc + ' %'}
         <span style="font-size:13px;color:#94a3b8">${disc > 0 ? '−'+disc+'%' : 'Не предоставляется'}</span>
       </div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Импланты</div>
+      <div class="order-field-val">${o.implant_system||'—'} ${chg('implant_system','Импланты',o.implant_system)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Общая сумма</div>
@@ -1187,8 +1196,6 @@ function renderDetail(o) {
   <div class="detail-card">
     <div class="items-hdr">Заказанные изделия</div>
     <div style="display:flex;flex-wrap:wrap;gap:16px;margin:6px 0 12px;font-size:13px;color:#64748b">
-      <div>Прайс-лист: <strong style="color:#1e293b">${o.clinic_name||'—'}</strong></div>
-      <div>Импланты: <strong style="color:#1e293b">${o.implant_system||'—'}</strong> ${chg('implant_system','Импланты',o.implant_system)}</div>
       <div>Предпочитаемый техник: <strong style="color:#1e293b">${o.preferred_technician||'—'}</strong></div>
     </div>
     ${isAdmin ? `<button class="items-add-toggle" onclick="toggleAddForm('${o.id}')">+ Добавить изделие</button>` : ''}
