@@ -1111,7 +1111,7 @@ function renderDetail(o) {
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Прайс-лист</div>
-      <div class="order-field-val">${o.clinic_name||'—'}</div>
+      <div class="order-field-val">${o.price_list_clinic||'Общий прайс'} ${chg('price_list_clinic','Прайс-лист',o.price_list_clinic)}</div>
     </div>
     <div class="order-field"></div>
     <div class="order-field">
@@ -1121,6 +1121,11 @@ function renderDetail(o) {
     <div class="order-field">
       <div class="order-field-lbl">Моделировщик</div>
       <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Моделировщик',o.ceramist)}</div>
+    </div>
+    <div class="order-field"></div>
+    <div class="order-field">
+      <div class="order-field-lbl">Плановая дата сдачи</div>
+      <div class="order-field-val">${o.planned_delivery_date ? fmtShort(o.planned_delivery_date) : '—'} ${chg('planned_delivery_date','Плановая дата сдачи',o.planned_delivery_date)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Пациент</div>
@@ -2469,13 +2474,26 @@ async function showSettingsTab(tab) {
 }
 
 // ── РЕДАКТИРОВАНИЕ ПОЛЯ ЗАКАЗА ────────────────────────────────────────────────
-function editField(orderId, field, label, currentVal) {
+async function editField(orderId, field, label, currentVal) {
   const modal = document.createElement('div');
   modal.className = 'bank-modal-overlay';
-  const isDate = field === 'appointment_at' || field === 'deadline';
-  const inputHtml = isDate
-    ? `<input id="edit-field-val" class="form-input" type="datetime-local" value="${(currentVal||'').replace(' ','T').slice(0,16)}">`
-    : `<input id="edit-field-val" class="form-input" placeholder="${label}" value="${currentVal||''}">`;
+  const isDate = field === 'appointment_at' || field === 'deadline' || field === 'planned_delivery_date';
+  let inputHtml;
+  if (field === 'price_list_clinic') {
+    if (!priceClinicsList.length) {
+      try {
+        const r = await fetch(`${API}/clinic-prices/clinics`, {headers:{'x-pin': localStorage.getItem('pin')}});
+        priceClinicsList = (await r.json()).clinics;
+      } catch { /* silent */ }
+    }
+    const opts = priceClinicsList.map(name =>
+      `<option value="${name}" ${name===currentVal?'selected':''}>${name}</option>`).join('');
+    inputHtml = `<select id="edit-field-val" class="form-input"><option value="">Общий прайс</option>${opts}</select>`;
+  } else if (isDate) {
+    inputHtml = `<input id="edit-field-val" class="form-input" type="datetime-local" value="${(currentVal||'').replace(' ','T').slice(0,16)}">`;
+  } else {
+    inputHtml = `<input id="edit-field-val" class="form-input" placeholder="${label}" value="${currentVal||''}">`;
+  }
   modal.innerHTML = `
     <div class="bank-modal">
       <h3>${label}</h3>
@@ -2492,7 +2510,7 @@ function editField(orderId, field, label, currentVal) {
 
 async function saveField(orderId, field) {
   let value = document.getElementById('edit-field-val').value.trim();
-  if ((field === 'appointment_at' || field === 'deadline') && value) {
+  if ((field === 'appointment_at' || field === 'deadline' || field === 'planned_delivery_date') && value) {
     value = value.replace('T', ' ') + ':00';
   }
   try {

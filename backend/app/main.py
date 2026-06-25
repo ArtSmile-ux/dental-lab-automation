@@ -194,6 +194,8 @@ def init_db():
         "ALTER TABLE technicians ADD COLUMN load_percent REAL DEFAULT 0",
         "ALTER TABLE order_stages ADD COLUMN stage_type TEXT DEFAULT ''",
         "ALTER TABLE order_items ADD COLUMN act_issued INTEGER DEFAULT 0",
+        "ALTER TABLE orders ADD COLUMN price_list_clinic TEXT DEFAULT ''",
+        "ALTER TABLE orders ADD COLUMN planned_delivery_date TEXT DEFAULT ''",
     ]:
         try:
             c.execute(col_sql)
@@ -519,6 +521,7 @@ def create_order(data: OrderCreate, tech=Depends(get_tech), conn=Depends(db)):
          now, data.deadline, data.appointment_at,
          data.tooth_color, tech_row["name"], data.total, "", data.discount, data.implant_system)
     )
+    conn.execute("UPDATE orders SET price_list_clinic=? WHERE id=?", (data.clinic_name, order_id))
     modeler_name  = _pick_least_loaded(conn, 'technician', 'modeler',  order_id)
     ceramist_name = _pick_least_loaded(conn, 'modeler',    'ceramist', order_id)
     if modeler_name:
@@ -531,7 +534,8 @@ def create_order(data: OrderCreate, tech=Depends(get_tech), conn=Depends(db)):
 EDITABLE_ORDER_FIELDS = {
     'patient_name', 'clinic_name', 'doctor_name', 'tooth_color',
     'ceramist', 'modeler', 'implant_system', 'appointment_at',
-    'deadline', 'technician_name', 'work_type', 'teeth', 'description'
+    'deadline', 'technician_name', 'work_type', 'teeth', 'description',
+    'price_list_clinic', 'planned_delivery_date'
 }
 
 STAGE_TYPES = ['Гипсовка', 'Гравировка', 'Моделирование', 'Фрезировка', 'Покраска']
@@ -723,15 +727,28 @@ def set_clinic_price(data: ClinicPriceUpdate, tech=Depends(get_tech), conn=Depen
 def add_order_item(order_id: str, data: OrderItemAdd, tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Только для руководителя")
-    if not conn.execute("SELECT id FROM orders WHERE id=?", (order_id,)).fetchone():
+    order_row = conn.execute("SELECT price_list_clinic FROM orders WHERE id=?", (order_id,)).fetchone()
+    if not order_row:
         raise HTTPException(status_code=404, detail="Заказ не найден")
     nom = conn.execute("SELECT * FROM nomenclature WHERE id=?", (data.nomenclature_id,)).fetchone()
     if not nom:
         raise HTTPException(status_code=404, detail="Позиция номенклатуры не найдена")
-    total = nom["price"] * data.qty
+    price = nom["price"]
+    if order_row["price_list_clinic"]:
+        clinic = conn.execute(
+            "SELECT id FROM clinics WHERE name=?", (order_row["price_list_clinic"],)
+        ).fetchone()
+        if clinic:
+            override = conn.execute(
+                "SELECT price FROM clinic_prices WHERE clinic_id=? AND nomenclature_id=?",
+                (clinic["id"], data.nomenclature_id)
+            ).fetchone()
+            if override:
+                price = override["price"]
+    total = price * data.qty
     conn.execute(
         "INSERT INTO order_items (order_id,article,name,qty,price,total,is_delivered) VALUES (?,?,?,?,?,?,0)",
-        (order_id, nom["article"], nom["name"], data.qty, nom["price"], total)
+        (order_id, nom["article"], nom["name"], data.qty, price, total)
     )
     new_total = conn.execute(
         "SELECT COALESCE(SUM(total),0) FROM order_items WHERE order_id=?", (order_id,)
