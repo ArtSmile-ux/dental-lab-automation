@@ -1870,6 +1870,7 @@ function showOrders() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-orders').classList.add('active');
   setNav('bnav-orders');
+  if (orders.length) renderOrders();
 }
 
 // ── СОЗДАНИЕ ЗАКАЗА (только для admin) ────────────────────────────────────────
