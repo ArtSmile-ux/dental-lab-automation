@@ -438,6 +438,8 @@ class OrderCreate(BaseModel):
     appointment_at: Optional[str] = None
     discount:      float = 0
     total:         float = 0
+    tooth_color:    str = ""
+    implant_system: str = ""
 
 class AlfaKeySet(BaseModel):
     api_key: str
@@ -506,14 +508,20 @@ def create_order(data: OrderCreate, tech=Depends(get_tech), conn=Depends(db)):
     conn.execute(
         "INSERT INTO orders (id,patient_name,clinic_name,doctor_name,work_type,units,teeth,description,"
         "technician_id,technician_name,status,priority,created_at,deadline,appointment_at,"
-        "tooth_color,preferred_technician,total,payment_status,discount) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "tooth_color,preferred_technician,total,payment_status,discount,implant_system) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (order_id, data.patient_name, data.clinic_name, data.doctor_name,
          data.work_type, data.units, data.teeth, data.description,
          data.technician_id, tech_row["name"], "новый", data.priority,
          now, data.deadline, data.appointment_at,
-         "", tech_row["name"], data.total, "", data.discount)
+         data.tooth_color, tech_row["name"], data.total, "", data.discount, data.implant_system)
     )
+    modeler_name  = _pick_least_loaded(conn, 'technician', 'modeler',  order_id)
+    ceramist_name = _pick_least_loaded(conn, 'modeler',    'ceramist', order_id)
+    if modeler_name:
+        conn.execute("UPDATE orders SET modeler=? WHERE id=?", (modeler_name, order_id))
+    if ceramist_name:
+        conn.execute("UPDATE orders SET ceramist=? WHERE id=?", (ceramist_name, order_id))
     conn.commit()
     return {"success": True, "order": _fetch_order(conn, order_id)}
 

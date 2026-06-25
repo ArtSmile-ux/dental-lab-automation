@@ -486,7 +486,7 @@
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Цвет зубов</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:13px;color:#94a3b8">после создания</span></div>
+        <input class="form-input" id="f-tooth-color" placeholder="A2" autocomplete="off">
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Скидка</div>
@@ -494,12 +494,16 @@
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Система импл.</div>
-        <div class="order-field-val" style="color:#cbd5e1">— <span style="font-size:13px;color:#94a3b8">после создания</span></div>
+        <input class="form-input" id="f-implant-system" placeholder="Osstem" autocomplete="off">
       </div>
       <div class="order-field">
         <div class="order-field-lbl">Общая сумма</div>
         <input class="form-input" id="f-total" type="number" min="0" step="100" placeholder="0">
       </div>
+    </div>
+
+    <div class="form-section-title">Детали наряда</div>
+    <div class="order-fields-grid">
       <div class="order-field">
         <div class="order-field-lbl">Вид работы <span style="color:#ef4444">*</span></div>
         <input class="form-input" id="f-work" list="work-types" placeholder="Металлокерамика" autocomplete="off">
@@ -545,8 +549,7 @@
     <div class="status-pipeline">
       <button class="pipe-btn active">Новый</button>
       <button class="pipe-btn">В работе</button>
-      <button class="pipe-btn">На проверке</button>
-      <button class="pipe-btn">Передать на доставку</button>
+      <button class="pipe-btn">Готово</button>
       <button class="pipe-btn">Сдано</button>
     </div>
 
@@ -1980,6 +1983,8 @@ async function submitOrder() {
   const appt     = get('f-appt');
   const total    = parseFloat(document.getElementById('f-total').value) || 0;
   const discount = parseFloat(document.getElementById('f-discount').value) || 0;
+  const toothColor    = get('f-tooth-color');
+  const implantSystem = get('f-implant-system');
 
   const required = [
     [patient,  'Пациент'],
@@ -2008,6 +2013,7 @@ async function submitOrder() {
         patient_name: patient, clinic_name: clinic, doctor_name: doctor,
         work_type: work, units, teeth, description: desc,
         technician_id: techId, priority, total, discount,
+        tooth_color: toothColor, implant_system: implantSystem,
         deadline: deadline.replace('T',' ') + ':00',
         appointment_at: appt ? appt.replace('T',' ') + ':00' : null
       })
@@ -2030,7 +2036,7 @@ async function submitOrder() {
     if (idx >= 0) orders[idx] = order; else orders.unshift(order);
     draftItems = [];
     // Reset form
-    ['f-patient','f-clinic','f-doctor','f-work','f-teeth','f-deadline','f-appt']
+    ['f-patient','f-clinic','f-doctor','f-work','f-teeth','f-deadline','f-appt','f-tooth-color','f-implant-system']
       .forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('f-discount').value = 0;
     document.getElementById('f-total').value = '';
