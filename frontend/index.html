@@ -689,10 +689,10 @@ function urgency(deadline) {
   return 'green';
 }
 function statusLabel(s) {
-  return {новый:'Новый',в_работе:'В работе',на_проверке:'На проверке',готово:'Готово',сдано:'Сдано'}[s] || s;
+  return {новый:'Новый',в_работе:'В работе',готово:'Готово',сдано:'Сдано'}[s] || s;
 }
 function statusBadge(s) {
-  const cls = {новый:'gray',в_работе:'blue',готово:'green',сдано:'green',на_проверке:'yellow'}[s]||'gray';
+  const cls = {новый:'gray',в_работе:'blue',готово:'green',сдано:'green'}[s]||'gray';
   return `<span class="badge ${cls}">${statusLabel(s)}</span>`;
 }
 function showToast(msg, ms=2200) {
@@ -1082,7 +1082,7 @@ function renderDetail(o) {
   // ── КНОПКИ ДЕЙСТВИЙ ──
   const actions = `
   <div class="order-actions">
-    <button class="btn-action primary" onclick="changeStatus('${o.id}','сдано')">Провести и закрыть</button>
+    <button class="btn-action primary" onclick="closeOrderDetail('${o.id}')">Провести и закрыть</button>
     <button class="btn-action" onclick="showDetail('${o.id}')">Записать</button>
     <button class="btn-action" onclick="printNZ('${o.id}')">🖨 Печать НЗ</button>
     ${isAdmin ? `<button class="btn-action green" onclick="createAct('${o.id}')">Выписать акт</button>` : ''}
@@ -1145,8 +1145,7 @@ function renderDetail(o) {
 
   // ── СТАТУС-ПАЙПЛАЙН ──
   const pipes = [
-    ['новый','Новый'],['в_работе','В работе'],['на_проверке','На проверке'],
-    ['передать_на_доставку','Передать на доставку'],['сдано','Сдано']
+    ['новый','Новый'],['в_работе','В работе'],['готово','Готово'],['сдано','Сдано']
   ];
   const pipeline = `
   <div class="status-pipeline">
@@ -1371,6 +1370,10 @@ async function changeStatus(id, status) {
     showDetail(id);
     showToast(`Статус: ${statusLabel(status)}`);
   } catch { alert('Ошибка при смене статуса'); }
+}
+
+function closeOrderDetail(id) {
+  closeTab('order-' + id);
 }
 
 async function saveDiscount(id) {
