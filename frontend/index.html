@@ -1114,12 +1114,12 @@ function renderDetail(o) {
       <div class="order-field-val">${o.price_list_clinic||'Общий прайс'} ${chg('price_list_clinic','Прайс-лист',o.price_list_clinic)}</div>
     </div>
     <div class="order-field">
-      <div class="order-field-lbl">Врач</div>
-      <div class="order-field-val">${o.doctor_name||'—'} ${chg('doctor_name','Врач',o.doctor_name)}</div>
-    </div>
-    <div class="order-field">
       <div class="order-field-lbl">Моделировщик</div>
       <div class="order-field-val">${o.ceramist||'—'} ${chg('ceramist','Моделировщик',o.ceramist)}</div>
+    </div>
+    <div class="order-field">
+      <div class="order-field-lbl">Врач</div>
+      <div class="order-field-val">${o.doctor_name||'—'} ${chg('doctor_name','Врач',o.doctor_name)}</div>
     </div>
     <div class="order-field">
       <div class="order-field-lbl">Плановая дата сдачи</div>
