@@ -15,7 +15,7 @@ try:
 except ImportError:
     _HTTPX = False
 
-DB_PATH  = os.path.join(os.path.dirname(__file__), "../../dental_lab.db")
+DB_PATH  = os.environ.get("DB_PATH") or os.path.join(os.path.dirname(__file__), "../../dental_lab.db")
 FRONTEND = os.path.join(os.path.dirname(__file__), "../../frontend/index.html")
 
 # ── Alfa Bank config ──────────────────────────────────────────────────────────
