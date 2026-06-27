@@ -1179,12 +1179,11 @@ function renderDetail(o) {
       <td>${it.total ? Number(it.total).toLocaleString('ru')+' ₽' : '—'}</td>
       <td><span class="td-check${it.is_delivered?' done':''}" onclick="toggleDelivered('${o.id}',${it.id})">${it.is_delivered?'✓':''}</span></td>
       <td><span class="td-check${it.act_issued?' done':''}" onclick="toggleActIssued('${o.id}',${it.id})">${it.act_issued?'✓':''}</span></td>
-      ${isAdmin ? `<td><button class="td-del" onclick="deleteItem('${o.id}',${it.id})">×</button></td>` : '<td></td>'}
     </tr>`).join('');
 
   const addItemRow = isAdmin ? `
   <tr id="add-item-wrap-${o.id}" style="display:none">
-    <td colspan="10" style="padding:8px 0">
+    <td colspan="9" style="padding:8px 0">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <select class="add-item-select" id="nom-sel-${o.id}" style="flex:1;min-width:180px">
           <option value="">— Выберите изделие —</option>${nomOpts}
@@ -1198,18 +1197,15 @@ function renderDetail(o) {
   const itemsSection = `
   <div class="detail-card">
     <div class="items-hdr">Заказанные изделия</div>
-    <div style="display:flex;flex-wrap:wrap;gap:16px;margin:6px 0 12px;font-size:13px;color:#64748b">
-      <div>Предпочитаемый техник: <strong style="color:#1e293b">${o.preferred_technician||'—'}</strong></div>
-    </div>
     ${isAdmin ? `<button class="items-add-toggle" onclick="toggleAddForm('${o.id}')">+ Добавить изделие</button>` : ''}
     <div style="overflow-x:auto;margin-top:10px">
       <table class="items-table">
         <thead><tr>
           <th>ДАТА РЕГ.</th><th>АРТ.</th><th>ПОЗИЦИЯ ПРАЙСА</th>
-          <th>ЗУБЫ</th><th>КОЛ.</th><th>ЦЕНА</th><th>СУММА</th><th>СДАНО</th><th>АКТ</th><th></th>
+          <th>ЗУБЫ</th><th>КОЛ.</th><th>ЦЕНА</th><th>СУММА</th><th>СДАНО</th><th>АКТ</th>
         </tr></thead>
         <tbody>
-          ${itemRows || `<tr><td colspan="10" style="color:#94a3b8;padding:12px 0">${o.work_type} · ${o.units} ед.${o.teeth?' · '+o.teeth:''}</td></tr>`}
+          ${itemRows || `<tr><td colspan="9" style="color:#94a3b8;padding:12px 0">${o.work_type} · ${o.units} ед.${o.teeth?' · '+o.teeth:''}</td></tr>`}
           ${addItemRow}
         </tbody>
       </table>
@@ -1327,19 +1323,6 @@ async function addItem(orderId) {
     showToast('Изделие добавлено');
     showDetail(orderId);
   } catch { showToast('Ошибка при добавлении'); }
-}
-
-async function deleteItem(orderId, itemId) {
-  try {
-    const r = await fetch(`${API}/orders/${orderId}/items/${itemId}`, {
-      method:'DELETE', headers:{'x-pin':localStorage.getItem('pin')}
-    });
-    const data = await r.json();
-    const idx = orders.findIndex(x => x.id === orderId);
-    if (idx >= 0) orders[idx] = data.order;
-    showToast('Изделие удалено');
-    showDetail(orderId);
-  } catch { showToast('Ошибка при удалении'); }
 }
 
 async function updateItemQty(orderId, itemId, qty) {
