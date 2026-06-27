@@ -1119,6 +1119,15 @@ async def alfa_webhook(request: Request):
         body = await request.json()
     except Exception:
         body = {}
+    amount_obj = body.get("amount")
+    amount_obj = amount_obj if isinstance(amount_obj, dict) else {}
+    payer_obj = body.get("payer")
+    payer_obj = payer_obj if isinstance(payer_obj, dict) else {}
+    try:
+        amount = float(amount_obj.get("value", body.get("amount", 0)) or 0)
+    except (TypeError, ValueError):
+        amount = 0.0
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     raw = _json.dumps(body, ensure_ascii=False)
@@ -1126,10 +1135,10 @@ async def alfa_webhook(request: Request):
         "INSERT INTO alfa_webhooks (event_type, amount, currency, operation_date, counterparty, inn, purpose, account, raw_json) VALUES (?,?,?,?,?,?,?,?,?)",
         (
             body.get("eventType") or body.get("type", ""),
-            float(body.get("amount", {}).get("value", 0) if isinstance(body.get("amount"), dict) else body.get("amount", 0)),
-            body.get("amount", {}).get("currency", "RUB") if isinstance(body.get("amount"), dict) else "RUB",
+            amount,
+            amount_obj.get("currency", "RUB"),
             body.get("operationDate") or body.get("date", ""),
-            body.get("counterpartyName") or body.get("payer", {}).get("name", "") if isinstance(body.get("payer"), dict) else body.get("counterpartyName", ""),
+            body.get("counterpartyName") or payer_obj.get("name", ""),
             body.get("counterpartyInn") or "",
             body.get("paymentPurpose") or body.get("purpose", ""),
             body.get("accountNumber") or "",
