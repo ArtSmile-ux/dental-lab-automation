@@ -2326,8 +2326,8 @@ async function renderBankScreen() {
           <div class="bank-exp">Подключён: ${new Date(status.updated_at).toLocaleString('ru')}</div>
           <button class="btn-danger-sm" onclick="disconnectBank()">Отключить</button>
         </div>
-        <div id="bank-txn"><div class="loading-text">Загрузка данных счёта...</div></div>`;
-      loadTransactions();
+        <div id="bank-txn"><div class="loading-text">Загрузка уведомлений от банка...</div></div>`;
+      loadWebhookEvents();
     } else {
       content.innerHTML = `
         <div class="bank-header">
@@ -2382,47 +2382,32 @@ async function submitAlfaKey() {
   }
 }
 
-async function loadTransactions() {
+async function loadWebhookEvents() {
   const el = document.getElementById('bank-txn');
   if (!el) return;
   try {
-    const r = await fetch(`${API}/alfa/transactions`, {headers:{'x-pin':localStorage.getItem('pin')}});
-    if (r.status === 401) {
-      el.innerHTML = '<div class="detail-card"><p style="color:#dc2626;text-align:center">Токен устарел — переподключитесь</p></div>';
-      return;
-    }
+    const r = await fetch(`${API}/alfa/webhooks`, {headers:{'x-pin':localStorage.getItem('pin')}});
     const data = await r.json();
-    const txns = data.transactions || [];
-    if (!txns.length) {
-      el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#64748b">Операций за сегодня нет</p></div>';
+    const events = data.webhooks || [];
+    if (!events.length) {
+      el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#64748b">Уведомлений от банка пока нет</p></div>';
       return;
     }
-    const total = txns.reduce((s,t) => s + (t.direction==='CREDIT' ? t.amount.amount : -t.amount.amount), 0);
-    const totalColor = total >= 0 ? '#16a34a' : '#dc2626';
-    el.innerHTML = `
-      <div class="detail-card" style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:#64748b">Итого за сегодня</span>
-          <span style="font-size:18px;font-weight:700;color:${totalColor}">${total>=0?'+':''}${total.toFixed(2)} ₽</span>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px">${txns.length} операций · счёт 40702810102300000001</div>
-      </div>` +
-    txns.map(t => {
-      const isCredit = t.direction === 'CREDIT';
+    el.innerHTML = events.map(w => {
+      const isCredit = Number(w.amount || 0) >= 0;
       const color = isCredit ? '#16a34a' : '#dc2626';
-      const sign = isCredit ? '+' : '-';
-      const party = t.rurTransfer ? (isCredit ? t.rurTransfer.payerName : t.rurTransfer.payeeName) : '';
+      const sign = isCredit ? '+' : '';
       return `<div class="detail-card" style="margin-bottom:8px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-          <span style="font-size:13px;font-weight:600;color:#1e293b;flex:1;margin-right:8px">${party || 'Перевод'}</span>
-          <span style="font-size:15px;font-weight:700;color:${color};white-space:nowrap">${sign}${t.amount.amount.toFixed(2)} ₽</span>
+          <span style="font-size:13px;font-weight:600;color:#1e293b;flex:1;margin-right:8px">${w.counterparty || w.event_type || 'Событие'}</span>
+          <span style="font-size:15px;font-weight:700;color:${color};white-space:nowrap">${sign}${Number(w.amount||0).toFixed(2)} ${w.currency||'RUB'}</span>
         </div>
-        <div style="font-size:12px;color:#64748b;line-height:1.4">${t.paymentPurpose || '—'}</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:4px">${(t.documentDate||'').slice(0,10)}</div>
+        <div style="font-size:12px;color:#64748b;line-height:1.4">${w.purpose || '—'}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px">${(w.received_at||'').slice(0,16).replace('T',' ')}</div>
       </div>`;
     }).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#dc2626">Ошибка загрузки транзакций</p></div>';
+  } catch {
+    el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#dc2626">Ошибка загрузки уведомлений</p></div>';
   }
 }
 
