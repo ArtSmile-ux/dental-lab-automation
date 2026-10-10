@@ -7,6 +7,10 @@ from datetime import datetime, timedelta
 import os
 import sqlite3
 import secrets
+import asyncio
+import hmac
+import json
+import logging
 from urllib.parse import urlencode
 
 try:
@@ -19,9 +23,20 @@ DB_PATH  = os.environ.get("DB_PATH") or os.path.join(os.path.dirname(__file__), 
 FRONTEND = os.path.join(os.path.dirname(__file__), "../../frontend/index.html")
 
 # ── Alfa Bank config ──────────────────────────────────────────────────────────
-ALFA_CERT_PEM     = os.environ.get("ALFA_CERT_PEM", "")
-ALFA_CERT_KEY     = os.environ.get("ALFA_CERT_KEY", "")
-ALFA_API_BASE     = "https://sandbox.alfabank.ru/api"
+# Все параметры задаются через переменные окружения, чтобы переключение
+# песочница ↔ боевой контур не требовало правки кода.
+ALFA_CERT_PEM       = os.environ.get("ALFA_CERT_PEM", "")
+ALFA_CERT_KEY       = os.environ.get("ALFA_CERT_KEY", "")
+ALFA_CA_BUNDLE      = os.environ.get("ALFA_CA_BUNDLE", "")      # свой CA, если нужен
+ALFA_API_BASE       = os.environ.get("ALFA_API_BASE", "https://baas.alfabank.ru").rstrip("/")
+ALFA_STATEMENT_PATH = os.environ.get("ALFA_STATEMENT_PATH", "/api/statement/transactions")
+ALFA_ACCOUNT        = os.environ.get("ALFA_ACCOUNT", "")        # номер расчётного счёта
+ALFA_AUTH_SCHEME    = os.environ.get("ALFA_AUTH_SCHEME", "Bearer")
+ALFA_SYNC_MINUTES   = int(os.environ.get("ALFA_SYNC_MINUTES", "15") or 0)  # 0 — выкл.
+ALFA_SYNC_DAYS      = max(1, int(os.environ.get("ALFA_SYNC_DAYS", "3") or 1))
+ALFA_WEBHOOK_SECRET = os.environ.get("ALFA_WEBHOOK_SECRET", "")
+
+log = logging.getLogger("artsmile.alfa")
 
 app = FastAPI(title="Dental Lab API")
 
@@ -169,6 +184,13 @@ def init_db():
         account       TEXT DEFAULT '',
         raw_json      TEXT DEFAULT ''
     );
+    CREATE TABLE IF NOT EXISTS alfa_sync_state (
+        id          INTEGER PRIMARY KEY CHECK (id = 1),
+        last_run_at TEXT,
+        last_ok_at  TEXT,
+        last_error  TEXT,
+        last_added  INTEGER DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS clinics (
         id           TEXT PRIMARY KEY,
         name         TEXT NOT NULL UNIQUE,
@@ -196,6 +218,8 @@ def init_db():
         "ALTER TABLE order_items ADD COLUMN act_issued INTEGER DEFAULT 0",
         "ALTER TABLE orders ADD COLUMN price_list_clinic TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN planned_delivery_date TEXT DEFAULT ''",
+        "ALTER TABLE alfa_webhooks ADD COLUMN ext_id TEXT DEFAULT ''",
+        "ALTER TABLE alfa_webhooks ADD COLUMN source TEXT DEFAULT 'webhook'",
     ]:
         try:
             c.execute(col_sql)
@@ -318,6 +342,13 @@ def init_db():
                 "INSERT OR IGNORE INTO clinics (id, name) VALUES (?, ?)",
                 (secrets.token_hex(6), row[0])
             )
+
+    # Одна операция банка = одна строка, даже если она пришла и вебхуком,
+    # и при загрузке выписки.
+    c.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_alfa_webhooks_ext_id "
+        "ON alfa_webhooks(ext_id) WHERE ext_id != ''"
+    )
 
     conn.commit()
     conn.close()
@@ -1055,15 +1086,189 @@ def delete_clinic(clinic_id: str, tech=Depends(get_tech), conn=Depends(db)):
 
 
 # ── ALFA BANK ──────────────────────────────────────────────────────────────────
+#
+# Данные попадают на экран «Банк» двумя путями:
+#   1) вебхук: банк сам присылает операцию на POST /alfa/webhook;
+#   2) выписка: сервер раз в ALFA_SYNC_MINUTES минут (и по кнопке «Обновить»)
+#      сам запрашивает операции за последние ALFA_SYNC_DAYS дней.
+# Оба пути пишут в alfa_webhooks; дубли отсекаются по ext_id (id операции банка).
+
+class AlfaSyncError(Exception):
+    pass
+
+
+class AlfaNotConfigured(AlfaSyncError):
+    pass
+
+
+def _alfa_state(conn):
+    row = conn.execute("SELECT * FROM alfa_sync_state WHERE id=1").fetchone()
+    return dict(row) if row else {}
+
+
+def _alfa_save_state(conn, ok: bool, error: str = "", added: int = 0):
+    now = datetime.now().isoformat(timespec="seconds")
+    conn.execute(
+        "INSERT INTO alfa_sync_state (id, last_run_at, last_ok_at, last_error, last_added) "
+        "VALUES (1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET "
+        "last_run_at=excluded.last_run_at, "
+        "last_ok_at=COALESCE(excluded.last_ok_at, alfa_sync_state.last_ok_at), "
+        "last_error=excluded.last_error, last_added=excluded.last_added",
+        (now, now if ok else None, error, added),
+    )
+    conn.commit()
+
+
+def _alfa_row_from_txn(t: dict) -> tuple:
+    """Приводит операцию выписки/вебхука к строке alfa_webhooks.
+    Разбор намеренно терпимый: поля у выписки и вебхука называются по-разному."""
+    amount_obj = t.get("amount") if isinstance(t.get("amount"), dict) else {}
+    transfer = t.get("rurTransfer") if isinstance(t.get("rurTransfer"), dict) else {}
+    payer = t.get("payer") if isinstance(t.get("payer"), dict) else {}
+    try:
+        amount = float(
+            amount_obj.get("amount", amount_obj.get("value"))
+            if amount_obj else (t.get("amountRub") or t.get("amount") or 0)
+        )
+    except (TypeError, ValueError):
+        amount = 0.0
+    direction = str(t.get("direction") or "").upper()
+    if direction == "DEBIT" and amount > 0:
+        amount = -amount  # списание показываем со знаком минус
+    if direction == "DEBIT":
+        counterparty = transfer.get("payeeName") or t.get("counterpartyName") or ""
+        inn = transfer.get("payeeInn") or t.get("counterpartyInn") or ""
+    else:
+        counterparty = (transfer.get("payerName") or t.get("counterpartyName")
+                        or payer.get("name") or "")
+        inn = transfer.get("payerInn") or t.get("counterpartyInn") or ""
+    ext_id = str(t.get("transactionId") or t.get("uuid") or t.get("operationId") or "")
+    return (
+        t.get("eventType") or t.get("type") or direction.lower(),
+        amount,
+        amount_obj.get("currencyName") or amount_obj.get("currency") or "RUB",
+        t.get("operationDate") or t.get("documentDate") or t.get("date") or "",
+        counterparty,
+        inn,
+        t.get("paymentPurpose") or t.get("purpose") or "",
+        t.get("accountNumber") or "",
+        json.dumps(t, ensure_ascii=False),
+        ext_id,
+    )
+
+
+def _alfa_store(conn, t: dict, source: str) -> int:
+    cur = conn.execute(
+        "INSERT OR IGNORE INTO alfa_webhooks (event_type, amount, currency, operation_date, "
+        "counterparty, inn, purpose, account, raw_json, ext_id, source) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        _alfa_row_from_txn(t) + (source,),
+    )
+    return cur.rowcount
+
+
+def alfa_sync(days: Optional[int] = None) -> dict:
+    """Загружает выписку за последние `days` дней. Синхронная — вызывать
+    из threadpool (обычный def-эндпоинт или asyncio.to_thread)."""
+    days = days or ALFA_SYNC_DAYS
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        if not _HTTPX:
+            raise AlfaNotConfigured("httpx не установлен на сервере")
+        row = conn.execute("SELECT access_token FROM alfa_tokens WHERE id=1").fetchone()
+        if not row or not row["access_token"]:
+            raise AlfaNotConfigured("Банк не подключён")
+        if not ALFA_ACCOUNT:
+            raise AlfaNotConfigured("Не задан номер счёта (переменная ALFA_ACCOUNT)")
+
+        cert = (ALFA_CERT_PEM, ALFA_CERT_KEY) if ALFA_CERT_PEM and ALFA_CERT_KEY else None
+        verify = ALFA_CA_BUNDLE or True
+        headers = {
+            "Authorization": f"{ALFA_AUTH_SCHEME} {row['access_token']}",
+            "Accept": "application/json",
+        }
+        added = 0
+        today = datetime.now().date()
+        with httpx.Client(cert=cert, verify=verify, timeout=20) as client:
+            for d in range(days):
+                stmt_date = (today - timedelta(days=d)).isoformat()
+                for page in range(1, 51):
+                    resp = client.get(
+                        ALFA_API_BASE + ALFA_STATEMENT_PATH,
+                        params={"accountNumber": ALFA_ACCOUNT, "statementDate": stmt_date,
+                                "page": page, "curFormat": "curTransfer"},
+                        headers=headers,
+                    )
+                    if resp.status_code in (401, 403):
+                        raise AlfaSyncError(
+                            f"Банк отклонил доступ ({resp.status_code}): токен истёк или "
+                            f"недействителен — переподключите банк")
+                    if resp.status_code != 200:
+                        raise AlfaSyncError(
+                            f"Ошибка API банка ({resp.status_code}): {resp.text[:300]}")
+                    data = resp.json()
+                    txns = data.get("transactions") if isinstance(data, dict) else data
+                    txns = txns or []
+                    for t in txns:
+                        if isinstance(t, dict):
+                            added += _alfa_store(conn, t, "statement")
+                    links = data.get("_links") if isinstance(data, dict) else None
+                    has_next = any(isinstance(l, dict) and l.get("rel") == "next"
+                                   for l in (links or []))
+                    if not txns or not has_next:
+                        break
+        conn.commit()
+        _alfa_save_state(conn, ok=True, added=added)
+        return {"success": True, "added": added, **_alfa_state(conn)}
+    except AlfaNotConfigured:
+        raise
+    except Exception as e:
+        msg = str(e) if isinstance(e, AlfaSyncError) else f"{type(e).__name__}: {e}"
+        _alfa_save_state(conn, ok=False, error=msg[:500])
+        log.warning("Alfa sync failed: %s", msg)
+        raise AlfaSyncError(msg) from e
+    finally:
+        conn.close()
+
+
+async def _alfa_sync_loop():
+    await asyncio.sleep(10)  # дать серверу подняться
+    while True:
+        try:
+            await asyncio.to_thread(alfa_sync)
+        except AlfaNotConfigured:
+            pass  # банк не подключён — молча ждём
+        except Exception:
+            pass  # ошибка уже записана в alfa_sync_state и в лог
+        await asyncio.sleep(ALFA_SYNC_MINUTES * 60)
+
+
+@app.on_event("startup")
+async def _start_alfa_sync():
+    if ALFA_SYNC_MINUTES > 0:
+        asyncio.create_task(_alfa_sync_loop())
+
 
 @app.get("/alfa/status")
 def alfa_status(tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403)
     row = conn.execute("SELECT access_token, updated_at FROM alfa_tokens WHERE id=1").fetchone()
-    if row and row["access_token"]:
-        return {"connected": True, "updated_at": row["updated_at"]}
-    return {"connected": False}
+    if not (row and row["access_token"]):
+        return {"connected": False}
+    state = _alfa_state(conn)
+    return {
+        "connected": True,
+        "updated_at": row["updated_at"],
+        "account_configured": bool(ALFA_ACCOUNT),
+        "auto_sync_minutes": ALFA_SYNC_MINUTES,
+        "webhook_protected": bool(ALFA_WEBHOOK_SECRET),
+        "last_run_at": state.get("last_run_at"),
+        "last_ok_at": state.get("last_ok_at"),
+        "last_error": state.get("last_error") or "",
+        "last_added": state.get("last_added") or 0,
+    }
 
 @app.post("/alfa/connect")
 def alfa_connect(data: AlfaKeySet, tech=Depends(get_tech), conn=Depends(db)):
@@ -1080,29 +1285,17 @@ def alfa_connect(data: AlfaKeySet, tech=Depends(get_tech), conn=Depends(db)):
     conn.commit()
     return {"success": True}
 
-@app.get("/alfa/transactions")
-async def alfa_transactions(tech=Depends(get_tech), conn=Depends(db)):
+@app.post("/alfa/sync")
+def alfa_sync_now(tech=Depends(get_tech)):
+    """Кнопка «Обновить» на экране «Банк»."""
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403)
-    if not _HTTPX:
-        raise HTTPException(status_code=503, detail="httpx не установлен на сервере")
-
-    row = conn.execute("SELECT access_token FROM alfa_tokens WHERE id=1").fetchone()
-    if not row or not row["access_token"]:
-        raise HTTPException(status_code=400, detail="Банк не подключён")
-
-    cert = (ALFA_CERT_PEM, ALFA_CERT_KEY) if ALFA_CERT_PEM and ALFA_CERT_KEY else None
-    async with httpx.AsyncClient(cert=cert, verify=False, timeout=15) as client:
-        resp = await client.get(
-            f"{ALFA_API_BASE}/v1/accounts",
-            headers={"Authorization": f"API_KEY {row['access_token']}"}
-        )
-    if resp.status_code == 401:
-        raise HTTPException(status_code=401, detail="API Key недействителен — проверьте ключ")
-    if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code,
-                            detail=f"Ошибка API банка ({resp.status_code}): {resp.text[:300]}")
-    return resp.json()
+    try:
+        return alfa_sync()
+    except AlfaNotConfigured as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except AlfaSyncError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 @app.delete("/alfa/disconnect")
 def alfa_disconnect(tech=Depends(get_tech), conn=Depends(db)):
@@ -1114,44 +1307,36 @@ def alfa_disconnect(tech=Depends(get_tech), conn=Depends(db)):
 
 @app.post("/alfa/webhook")
 async def alfa_webhook(request: Request):
-    import json as _json
+    # Без проверки любой мог бы прислать сюда «платёж», и он появился бы на экране.
+    # Адрес вебхука в кабинете банка: https://<домен>/alfa/webhook?secret=<ALFA_WEBHOOK_SECRET>
+    if ALFA_WEBHOOK_SECRET:
+        provided = (request.query_params.get("secret")
+                    or request.headers.get("x-webhook-secret") or "")
+        if not hmac.compare_digest(provided, ALFA_WEBHOOK_SECRET):
+            raise HTTPException(status_code=403)
+    else:
+        log.warning("ALFA_WEBHOOK_SECRET не задан — вебхук принимается без проверки")
     try:
         body = await request.json()
     except Exception:
         body = {}
-    amount_obj = body.get("amount")
-    amount_obj = amount_obj if isinstance(amount_obj, dict) else {}
-    payer_obj = body.get("payer")
-    payer_obj = payer_obj if isinstance(payer_obj, dict) else {}
-    try:
-        amount = float(amount_obj.get("value", body.get("amount", 0)) or 0)
-    except (TypeError, ValueError):
-        amount = 0.0
+    if not isinstance(body, dict):
+        body = {}
 
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    raw = _json.dumps(body, ensure_ascii=False)
-    conn.execute(
-        "INSERT INTO alfa_webhooks (event_type, amount, currency, operation_date, counterparty, inn, purpose, account, raw_json) VALUES (?,?,?,?,?,?,?,?,?)",
-        (
-            body.get("eventType") or body.get("type", ""),
-            amount,
-            amount_obj.get("currency", "RUB"),
-            body.get("operationDate") or body.get("date", ""),
-            body.get("counterpartyName") or payer_obj.get("name", ""),
-            body.get("counterpartyInn") or "",
-            body.get("paymentPurpose") or body.get("purpose", ""),
-            body.get("accountNumber") or "",
-            raw
-        )
-    )
-    conn.commit()
-    conn.close()
+    try:
+        _alfa_store(conn, body, "webhook")
+        conn.commit()
+    finally:
+        conn.close()
     return {"status": "ok"}
 
 @app.get("/alfa/webhooks")
 def get_webhooks(tech=Depends(get_tech), conn=Depends(db)):
     if tech.get("role") != "admin":
         raise HTTPException(status_code=403)
-    rows = conn.execute("SELECT * FROM alfa_webhooks ORDER BY received_at DESC LIMIT 100").fetchall()
+    rows = conn.execute(
+        "SELECT * FROM alfa_webhooks "
+        "ORDER BY COALESCE(NULLIF(operation_date, ''), received_at) DESC, id DESC LIMIT 100"
+    ).fetchall()
     return {"webhooks": [dict(r) for r in rows]}

@@ -2311,6 +2311,62 @@ async function showBank() {
   await renderBankScreen();
 }
 
+// Данные банка приходят извне (вебхук/выписка) — в HTML только через экранирование.
+function escHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function bankSyncInfo(status) {
+  const when = iso => iso ? new Date(iso).toLocaleString('ru') : '—';
+  let html = `<div class="bank-exp">Последнее обновление: ${when(status.last_ok_at)}`
+    + (status.auto_sync_minutes ? ` · авто каждые ${status.auto_sync_minutes} мин` : ' · автообновление выключено')
+    + `</div>`;
+  if (!status.account_configured) {
+    html += `<div class="bank-exp" style="color:#b45309">Не задан номер счёта (ALFA_ACCOUNT) — выписка не загружается, работают только вебхуки</div>`;
+  }
+  if (status.last_error) {
+    html += `<div class="bank-exp" style="color:#dc2626">Ошибка (${when(status.last_run_at)}): ${escHtml(status.last_error)}</div>`;
+  }
+  return html;
+}
+
+// Пока открыт экран «Банк», список перечитывается раз в минуту
+let bankRefreshTimer = null;
+function startBankAutoRefresh() {
+  clearInterval(bankRefreshTimer);
+  bankRefreshTimer = setInterval(() => {
+    if (!document.getElementById('screen-bank')?.classList.contains('active')) {
+      clearInterval(bankRefreshTimer); bankRefreshTimer = null; return;
+    }
+    refreshBankStatusLine();
+    loadWebhookEvents();
+  }, 60000);
+}
+
+async function refreshBankStatusLine() {
+  const el = document.getElementById('bank-sync-info');
+  if (!el) return;
+  try {
+    const r = await fetch(`${API}/alfa/status`, {headers:{'x-pin':localStorage.getItem('pin')}});
+    if (r.ok) el.innerHTML = bankSyncInfo(await r.json());
+  } catch {}
+}
+
+async function syncBank(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Обновляю...'; }
+  try {
+    const r = await fetch(`${API}/alfa/sync`, {method:'POST', headers:{'x-pin':localStorage.getItem('pin')}});
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) showToast('Ошибка: ' + (data.detail || r.status), 5000);
+    else showToast(data.added ? `Новых операций: ${data.added}` : 'Новых операций нет');
+  } catch {
+    showToast('Сервер недоступен', 3000);
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Обновить'; }
+  refreshBankStatusLine();
+  loadWebhookEvents();
+}
+
 async function renderBankScreen() {
   const content = document.getElementById('bank-content');
   content.innerHTML = '<div class="loading-text">Загрузка...</div>';
@@ -2324,10 +2380,15 @@ async function renderBankScreen() {
           <div class="bank-logo">Альфа&#8209;Банк</div>
           <div class="bank-status connected">&#10003; Подключён</div>
           <div class="bank-exp">Подключён: ${new Date(status.updated_at).toLocaleString('ru')}</div>
-          <button class="btn-danger-sm" onclick="disconnectBank()">Отключить</button>
+          <div id="bank-sync-info">${bankSyncInfo(status)}</div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+            <button class="btn-primary" onclick="syncBank(this)">Обновить</button>
+            <button class="btn-danger-sm" onclick="disconnectBank()">Отключить</button>
+          </div>
         </div>
-        <div id="bank-txn"><div class="loading-text">Загрузка уведомлений от банка...</div></div>`;
+        <div id="bank-txn"><div class="loading-text">Загрузка операций...</div></div>`;
       loadWebhookEvents();
+      startBankAutoRefresh();
     } else {
       content.innerHTML = `
         <div class="bank-header">
@@ -2390,20 +2451,21 @@ async function loadWebhookEvents() {
     const data = await r.json();
     const events = data.webhooks || [];
     if (!events.length) {
-      el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#64748b">Уведомлений от банка пока нет</p></div>';
+      el.innerHTML = '<div class="detail-card"><p style="text-align:center;color:#64748b">Операций пока нет</p></div>';
       return;
     }
     el.innerHTML = events.map(w => {
       const isCredit = Number(w.amount || 0) >= 0;
       const color = isCredit ? '#16a34a' : '#dc2626';
       const sign = isCredit ? '+' : '';
+      const when = (w.operation_date || w.received_at || '').slice(0,16).replace('T',' ');
       return `<div class="detail-card" style="margin-bottom:8px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-          <span style="font-size:13px;font-weight:600;color:#1e293b;flex:1;margin-right:8px">${w.counterparty || w.event_type || 'Событие'}</span>
-          <span style="font-size:15px;font-weight:700;color:${color};white-space:nowrap">${sign}${Number(w.amount||0).toFixed(2)} ${w.currency||'RUB'}</span>
+          <span style="font-size:13px;font-weight:600;color:#1e293b;flex:1;margin-right:8px">${escHtml(w.counterparty || w.event_type || 'Операция')}</span>
+          <span style="font-size:15px;font-weight:700;color:${color};white-space:nowrap">${sign}${Number(w.amount||0).toFixed(2)} ${escHtml(w.currency||'RUB')}</span>
         </div>
-        <div style="font-size:12px;color:#64748b;line-height:1.4">${w.purpose || '—'}</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:4px">${(w.received_at||'').slice(0,16).replace('T',' ')}</div>
+        <div style="font-size:12px;color:#64748b;line-height:1.4">${escHtml(w.purpose || '—')}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px">${escHtml(when)}</div>
       </div>`;
     }).join('');
   } catch {
